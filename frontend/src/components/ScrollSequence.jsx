@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { motion, useInView, animate, useMotionValue, useScroll, useTransform } from "framer-motion";
+import { motion, useInView, animate, useMotionValue, useTransform } from "framer-motion";
 
 const milestones = [
     "Veterinario a casa",
@@ -43,14 +43,8 @@ const ScrollSequence = () => {
 
     const [imagesLoaded, setImagesLoaded] = useState(false);
     const imagesArrayRef = useRef([]);
-    const currentFrameValue = useMotionValue(1);
+    const animationProgress = useMotionValue(0);
     const [isAnimating, setIsAnimating] = useState(false);
-
-    // Rastreamos el progreso global del contenedor (400vh)
-    const { scrollYProgress } = useScroll({
-        target: containerRef,
-        offset: ["start start", "end end"]
-    });
 
     // Carga de imágenes
     useEffect(() => {
@@ -85,19 +79,19 @@ const ScrollSequence = () => {
 
             const canvasWidth = window.innerWidth;
             const canvasHeight = window.innerHeight;
-            
+
             // Only update canvas dimensions if they changed to prevent flicker
             if (canvas.width !== canvasWidth || canvas.height !== canvasHeight) {
                 canvas.width = canvasWidth;
                 canvas.height = canvasHeight;
             }
-            
+
             const isMobile = canvasWidth < 768;
 
             // Masive zoom on mobile to prevent huge unrendered gaps
-            const scaleMultiplier = isMobile ? 2.5 : 0.85;
+            const scaleMultiplier = isMobile ? 3.0 : 1.0;
             const scale = Math.min(canvasWidth / img.width, canvasHeight / img.height) * scaleMultiplier;
-            
+
             // Pull the image slightly up on mobile to fuse better with the Hero
             const verticalOffset = isMobile ? canvasHeight * -0.05 : 0;
 
@@ -111,12 +105,14 @@ const ScrollSequence = () => {
         preload();
 
         const handleResize = () => {
-            renderFrame(Math.round(currentFrameValue.get()));
+            const currentFrame = Math.round(1 + animationProgress.get() * 34);
+            renderFrame(currentFrame);
         };
         window.addEventListener("resize", handleResize);
 
-        const unsubscribe = currentFrameValue.on("change", (latest) => {
-            renderFrame(Math.round(latest));
+        const unsubscribe = animationProgress.on("change", (latest) => {
+            const currentFrame = Math.round(1 + latest * 34);
+            renderFrame(currentFrame);
         });
 
         return () => {
@@ -126,67 +122,63 @@ const ScrollSequence = () => {
         };
     }, []);
 
-    // Disparador de animación de video (independiente del scroll)
+    // Disparador de animación de video (tiempo fijo, 5s)
     useEffect(() => {
         if (isInView && imagesLoaded && !isAnimating) {
             setIsAnimating(true);
-            animate(currentFrameValue, 35, {
-                duration: 2,
+            animate(animationProgress, 1, {
+                duration: 5,
                 ease: "linear",
             });
         }
-    }, [isInView, imagesLoaded]);
+    }, [isInView, imagesLoaded, animationProgress, isAnimating]);
 
     return (
-        <div
+        <section
             ref={containerRef}
-            className="relative w-full h-[400vh] bg-[#020617]"
+            className="relative w-full h-[100vh] bg-[#020617] flex items-center justify-center overflow-hidden"
+            style={{
+                WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, black 15%, black 100%)",
+                maskImage: "linear-gradient(to bottom, transparent 0%, black 15%, black 100%)"
+            }}
         >
-            <div
-                className="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden"
-                style={{
-                    WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, black 15%, black 100%)",
-                    maskImage: "linear-gradient(to bottom, transparent 0%, black 15%, black 100%)"
-                }}
-            >
-                {/* 1. VISUAL FUSION: Radial Gradient Wrapper */}
-                <div className="absolute inset-0 z-0 flex items-center justify-center pointer-events-none">
-                    <div className="w-[80vw] h-[80vw] bg-orange-500/5 rounded-full blur-[120px]"></div>
-                </div>
-
-                {/* 2. CANVAS WITH MASK AND SCREEN BLEND */}
-                <div className="relative z-10 w-full h-full flex items-center justify-center pointer-events-none">
-                    <canvas
-                        ref={canvasRef}
-                        className="w-full h-full object-contain"
-                        style={{
-                            WebkitMaskImage: "radial-gradient(circle, black 40%, transparent 90%)",
-                            maskImage: "radial-gradient(circle, black 40%, transparent 90%)",
-                            mixBlendMode: "screen",
-                            filter: "drop-shadow(0 0 30px rgba(249, 115, 22, 0.4))",
-                            opacity: imagesLoaded ? 1 : 0,
-                            transition: "opacity 0.8s ease"
-                        }}
-                    />
-                </div>
-
-                {/* 3. TEXTOS LATERALES (Ligados al scroll manual) */}
-                <div className="absolute inset-0 z-20 pointer-events-none">
-                    {milestones.map((text, i) => (
-                        <MilestoneText
-                            key={i}
-                            text={text}
-                            index={i}
-                            total={milestones.length}
-                            progress={scrollYProgress}
-                        />
-                    ))}
-                </div>
-
-                {/* 4. AMBIENT GLOW OVERLAY */}
-                <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-[#020617] via-transparent to-[#020617]"></div>
+            {/* 1. VISUAL FUSION: Radial Gradient Wrapper */}
+            <div className="absolute inset-0 z-0 flex items-center justify-center pointer-events-none">
+                <div className="w-[80vw] h-[80vw] bg-orange-500/5 rounded-full blur-[120px]"></div>
             </div>
-        </div>
+
+            {/* 2. CANVAS WITH MASK AND SCREEN BLEND */}
+            <div className="relative z-10 w-full h-full flex items-center justify-center pointer-events-none">
+                <canvas
+                    ref={canvasRef}
+                    className="w-full h-full object-contain"
+                    style={{
+                        WebkitMaskImage: "radial-gradient(circle, black 40%, transparent 90%)",
+                        maskImage: "radial-gradient(circle, black 40%, transparent 90%)",
+                        mixBlendMode: "screen",
+                        filter: "drop-shadow(0 0 30px rgba(249, 115, 22, 0.4))",
+                        opacity: imagesLoaded ? 1 : 0,
+                        transition: "opacity 0.8s ease"
+                    }}
+                />
+            </div>
+
+            {/* 3. TEXTOS LATERALES (Ligados al progreso de animación) */}
+            <div className="absolute inset-0 z-20 pointer-events-none">
+                {milestones.map((text, i) => (
+                    <MilestoneText
+                        key={i}
+                        text={text}
+                        index={i}
+                        total={milestones.length}
+                        progress={animationProgress}
+                    />
+                ))}
+            </div>
+
+            {/* 4. AMBIENT GLOW OVERLAY */}
+            <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-[#020617] via-transparent to-[#020617]"></div>
+        </section>
     );
 };
 

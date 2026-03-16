@@ -9,6 +9,7 @@ import LoadingSpinner from "./components/LoadingSpinner";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import HomePage from "./pages/HomePage";
 import Product from "./components/Product"
+import Footer from "./components/Footer";
 import { Toaster } from "react-hot-toast";
 import { useAuthStore } from "./store/authStore";
 import { useEffect } from "react";
@@ -111,7 +112,7 @@ function App() {
           } />
         </Routes>
       </div>
-
+      <Footer/>
       <Toaster />
     </div>
   );
