@@ -10,13 +10,13 @@ const PurchaseManager = () => {
   const { purchases, isLoading, error, fetchPurchases, createPurchase, fetchPurchaseById } = usePurchaseStore();
   const { products, fetchProducts } = useProductStore();
   const { user } = useAuthStore();
-  
+
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [viewedPurchase, setViewedPurchase] = useState(null); // Para ver el detalle
-  
+
   const [supplier, setSupplier] = useState("");
   const [items, setItems] = useState([
-     { product_id: "", quantity: 1, unit_cost: 0 }
+    { product_id: "", quantity: 1, unit_cost: 0 }
   ]);
 
   useEffect(() => {
@@ -97,7 +97,7 @@ const PurchaseManager = () => {
         <h2 className="text-3xl font-bold text-white tracking-wide">
           Gestión de <span className="text-orange-500">Compras</span>
         </h2>
-        
+
         {!isFormOpen && !viewedPurchase && (
           <button
             onClick={() => setIsFormOpen(true)}
@@ -112,24 +112,24 @@ const PurchaseManager = () => {
       {/* FORMULARIO DE NUEVA COMPRA */}
       {isFormOpen && (
         <motion.div
-           initial={{ opacity: 0, height: 0, scale: 0.95 }}
-           animate={{ opacity: 1, height: "auto", scale: 1 }}
-           className="mb-8 p-6 bg-[#1a1a24] border border-white/10 rounded-2xl shadow-xl relative overflow-hidden"
+          initial={{ opacity: 0, height: 0, scale: 0.95 }}
+          animate={{ opacity: 1, height: "auto", scale: 1 }}
+          className="mb-8 p-6 bg-[#1a1a24] border border-white/10 rounded-2xl shadow-xl relative overflow-hidden"
         >
           <div className="flex justify-between items-center mb-6 relative z-10">
             <h3 className="text-xl font-bold text-white">Registrar Nueva Compra / Entrada</h3>
             <button onClick={cancelForm} className="text-gray-400 hover:text-white transition">
-               <X size={24} />
+              <X size={24} />
             </button>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1">Nombre del Proveedor / Empresa</label>
-              <input 
-                type="text" 
-                value={supplier} 
-                onChange={(e) => setSupplier(e.target.value)} 
+              <input
+                type="text"
+                value={supplier}
+                onChange={(e) => setSupplier(e.target.value)}
                 required
                 placeholder="Ej. Distribuidora Mayorista S.A."
                 className="w-full md:w-1/2 bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition"
@@ -192,10 +192,10 @@ const PurchaseManager = () => {
                     </div>
 
                     <div className="w-full md:w-32">
-                       <label className="block text-xs text-gray-400 mb-1">Subtotal</label>
-                       <div className="w-full bg-black/20 border border-white/5 rounded-lg px-3 py-2 text-gray-300 cursor-not-allowed">
-                          ${(Number(item.quantity) * Number(item.unit_cost)).toFixed(2)}
-                       </div>
+                      <label className="block text-xs text-gray-400 mb-1">Subtotal</label>
+                      <div className="w-full bg-black/20 border border-white/5 rounded-lg px-3 py-2 text-gray-300 cursor-not-allowed">
+                        ${(Number(item.quantity) * Number(item.unit_cost)).toFixed(2)}
+                      </div>
                     </div>
 
                     {items.length > 1 && (
@@ -211,7 +211,7 @@ const PurchaseManager = () => {
                   </div>
                 ))}
               </div>
-              
+
               <div className="mt-4 flex justify-end">
                 <div className="text-right">
                   <span className="text-gray-400 text-sm">Costo Total Estimado:</span>
@@ -221,15 +221,15 @@ const PurchaseManager = () => {
             </div>
 
             <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={cancelForm}
                 className="px-6 py-2.5 rounded-xl border border-white/10 text-gray-300 hover:bg-white/5 transition font-medium"
               >
                 Cancelar
               </button>
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 disabled={isLoading}
                 className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white transition shadow-lg shadow-orange-500/20 font-medium disabled:opacity-50"
               >
@@ -243,12 +243,12 @@ const PurchaseManager = () => {
       {/* VISTA DETALLE DE COMPRA */}
       {viewedPurchase && !isFormOpen && (
         <motion.div
-           initial={{ opacity: 0, scale: 0.95 }}
-           animate={{ opacity: 1, scale: 1 }}
-           className="mb-8 p-6 bg-[#1a1a24] border border-white/10 rounded-2xl shadow-xl"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="mb-8 p-6 bg-[#1a1a24] border border-white/10 rounded-2xl shadow-xl"
         >
           <div className="flex items-center justify-between mb-6">
-            <button 
+            <button
               onClick={() => setViewedPurchase(null)}
               className="flex items-center gap-2 text-orange-500 hover:text-orange-400 transition"
             >
@@ -256,7 +256,7 @@ const PurchaseManager = () => {
               <span>Volver al historial</span>
             </button>
             <div className="text-sm text-gray-400">
-               ID Compra: {viewedPurchase._id}
+              ID Compra: {viewedPurchase._id}
             </div>
           </div>
 
@@ -298,15 +298,15 @@ const PurchaseManager = () => {
                 {viewedPurchase.items?.map((item, idx) => (
                   <tr key={idx} className="hover:bg-white/5 transition-colors">
                     <td className="px-6 py-3 text-white">
-                       <span className="font-medium text-orange-400">{item.product_id?.name || 'Producto Desconocido'}</span>
-                       <div className="text-xs text-gray-500 mt-1">ID: {item.product_id?._id || item.product_id}</div>
+                      <span className="font-medium text-orange-400">{item.product_id?.name || 'Producto Desconocido'}</span>
+                      <div className="text-xs text-gray-500 mt-1">ID: {item.product_id?._id || item.product_id}</div>
                     </td>
                     <td className="px-6 py-3 text-gray-300">
-                       <span className="bg-white/10 px-2 py-1 rounded text-sm">+ {item.quantity} unidades</span>
+                      <span className="bg-white/10 px-2 py-1 rounded text-sm">+ {item.quantity} unidades</span>
                     </td>
                     <td className="px-6 py-3 text-gray-300">${Number(item.unit_cost).toFixed(2)}</td>
                     <td className="px-6 py-3 text-amber-500 font-medium">
-                       ${(Number(item.quantity) * Number(item.unit_cost)).toFixed(2)}
+                      ${(Number(item.quantity) * Number(item.unit_cost)).toFixed(2)}
                     </td>
                   </tr>
                 ))}
@@ -319,7 +319,7 @@ const PurchaseManager = () => {
       {/* ERROR HANDLER */}
       {error && !isFormOpen && !viewedPurchase && (
         <div className="p-4 mb-6 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl">
-           {error}
+          {error}
         </div>
       )}
 
@@ -327,17 +327,17 @@ const PurchaseManager = () => {
       {!isFormOpen && !viewedPurchase && (
         <div className="bg-[#1a1a24] border border-white/10 rounded-2xl overflow-hidden shadow-xl">
           {isLoading ? (
-             <div className="p-8 text-center text-gray-400">
-               Cargando historial de compras...
-             </div>
+            <div className="p-8 text-center text-gray-400">
+              Cargando historial de compras...
+            </div>
           ) : purchases.length === 0 ? (
-             <div className="p-12 text-center">
-               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/5 text-gray-400 mb-4">
-                 <PackageOpen size={30} />
-               </div>
-               <h3 className="text-xl font-bold text-white mb-2">Aún no hay compras</h3>
-               <p className="text-gray-400 mb-6">El historial de entradas de mercancía está vacío.</p>
-             </div>
+            <div className="p-12 text-center">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/5 text-gray-400 mb-4">
+                <PackageOpen size={30} />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">Aún no hay compras</h3>
+              <p className="text-gray-400 mb-6">El historial de entradas de mercancía está vacío.</p>
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
@@ -352,17 +352,17 @@ const PurchaseManager = () => {
                 </thead>
                 <tbody className="divide-y divide-white/5">
                   {purchases.map((purchase, index) => (
-                    <motion.tr 
+                    <motion.tr
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
-                      key={purchase._id} 
+                      key={purchase._id}
                       className="hover:bg-white/5 transition-colors group"
                     >
                       <td className="px-6 py-4 text-gray-300">
                         {new Date(purchase.createdAt || purchase.date).toLocaleDateString()}
                         <div className="text-xs text-gray-500 mt-0.5">
-                           {new Date(purchase.createdAt || purchase.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                          {new Date(purchase.createdAt || purchase.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </div>
                       </td>
                       <td className="px-6 py-4 text-white font-medium">
@@ -375,7 +375,7 @@ const PurchaseManager = () => {
                         ${Number(purchase.total_cost || 0).toFixed(2)}
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <button 
+                        <button
                           onClick={() => handleViewDetail(purchase._id)}
                           className="px-3 py-1.5 text-sm bg-white/5 hover:bg-white/10 text-orange-400 rounded-lg transition-colors inline-block"
                         >

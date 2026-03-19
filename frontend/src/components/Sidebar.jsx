@@ -69,10 +69,13 @@ const Sidebar = ({ isOpen, setIsOpen, activeTab, setActiveTab }) => {
 
             {/* Ganancia */}
             <li>
-              <a href="#" className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${isDarkMode ? 'hover:bg-white/10' : 'hover:bg-gray-200'}`}>
+              <button 
+                onClick={() => setActiveTab("analytics")}
+                className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors ${activeTab === 'analytics' ? 'bg-white/10 text-orange-400 font-medium' : isDarkMode ? 'hover:bg-white/10' : 'hover:bg-gray-200'}`}
+              >
                 <TrendingUp size={22} className="shrink-0" />
                 {isOpen && <span className="font-medium whitespace-nowrap">Ganancia</span>}
-              </a>
+              </button>
             </li>
 
             {/* Tienda */}
@@ -118,7 +121,14 @@ const Sidebar = ({ isOpen, setIsOpen, activeTab, setActiveTab }) => {
                       Compras (Entradas)
                     </button>
                   </li>
-                  <li><a href="#" className="block py-2 px-3 rounded-lg hover:bg-white/10 text-sm transition-colors">Punto de Venta</a></li>
+                  <li>
+                    <button
+                      onClick={() => setActiveTab("sales")}
+                      className={`w-full text-left block py-2 px-3 rounded-lg hover:bg-white/10 text-sm transition-colors ${activeTab === 'sales' ? 'bg-white/10 text-orange-400 font-medium' : ''}`}
+                    >
+                      Punto de Venta
+                    </button>
+                  </li>
                 </ul>
               )}
             </li>

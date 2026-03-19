@@ -9,6 +9,8 @@ import Sidebar from "../components/Sidebar";
 import CategoryManager from "../components/CategoryManager";
 import ProductManager from "../components/ProductManager";
 import PurchaseManager from "../components/PurchaseManager";
+import SalesManager from "../components/SalesManager";
+import AnalyticsManager from "../components/AnalyticsManager";
 
 const DashboardPage = () => {
   const { user, logout } = useAuthStore();
@@ -25,6 +27,8 @@ const DashboardPage = () => {
         {activeTab === "categories" && <CategoryManager />}
         {activeTab === "products" && <ProductManager />}
         {activeTab === "purchases" && <PurchaseManager />}
+        {activeTab === "sales" && <SalesManager />}
+        {activeTab === "analytics" && <AnalyticsManager />}
       </main>
     </>
   );
