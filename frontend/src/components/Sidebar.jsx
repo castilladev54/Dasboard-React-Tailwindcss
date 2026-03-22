@@ -69,7 +69,7 @@ const Sidebar = ({ isOpen, setIsOpen, activeTab, setActiveTab }) => {
 
             {/* Ganancia */}
             <li>
-              <button 
+              <button
                 onClick={() => setActiveTab("analytics")}
                 className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors ${activeTab === 'analytics' ? 'bg-white/10 text-orange-400 font-medium' : isDarkMode ? 'hover:bg-white/10' : 'hover:bg-gray-200'}`}
               >
@@ -145,7 +145,7 @@ const Sidebar = ({ isOpen, setIsOpen, activeTab, setActiveTab }) => {
             {user?.role === "admin" && (
               <>
                 <li>
-                  <button 
+                  <button
                     onClick={() => setActiveTab("adminCreateUser")}
                     className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors ${activeTab === 'adminCreateUser' ? 'bg-orange-500/10 text-orange-400 font-medium' : isDarkMode ? 'hover:bg-white/10' : 'hover:bg-gray-200'}`}
                   >

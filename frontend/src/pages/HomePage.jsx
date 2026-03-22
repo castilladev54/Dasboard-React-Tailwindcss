@@ -4,7 +4,8 @@ import Button from "../components/Button";
 import ServiceSection from "../components/ServiceSection";
 import LocationSection from "../components/LocationSection";
 import { heroContent } from "../constants";
-import ScrollSequence from "../components/ScrollSequence";
+import PricingSection from "../components/PricingSection";
+import dashboardScreenshot from "../assets/dasboardcastilladev.jpg";
 
 const HomePage = () => {
   // Rastrear el scroll global para la transición del Hero
@@ -16,26 +17,27 @@ const HomePage = () => {
   return (
     <>
       <main className="relative w-full bg-[#020617]">
-        {/* 1. SECCIÓN HERO: Texto principal. Conserva su altura pero ajustamos el padding y eliminamos overflow-hidden */}
+        {/* 1. SECCIÓN HERO: Layout dividido para el SaaS Mockup y Texto principal */}
         <motion.section
           style={{ opacity: heroOpacity, y: heroY }}
-          className="relative w-full min-h-[90vh] flex flex-col items-start justify-center text-left px-6 md:px-16 lg:px-24 pt-32 pb-20 z-20"
+          className="relative w-full min-h-[90vh] flex flex-col lg:flex-row items-center justify-between text-left px-6 md:px-16 lg:px-24 pt-32 pb-20 z-20 gap-12 lg:gap-8"
         >
+          {/* TEXTO IZQUIERDO */}
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8 }}
-            className="max-w-5xl w-full"
+            className="w-full lg:w-1/2 flex flex-col items-start"
           >
             {/* Logo / Icono Principal */}
             <div className="mb-8 flex justify-start">
               <div className="w-20 h-20 md:w-24 md:h-24 bg-orange-500/10 rounded-full flex items-center justify-center border border-orange-500/30 backdrop-blur-xl drop-shadow-[0_0_20px_rgba(249,115,22,0.3)]">
-                <span className="text-4xl md:text-5xl drop-shadow-lg">🐾</span>
+                <span className="text-4xl md:text-5xl drop-shadow-lg">🏪</span>
               </div>
             </div>
 
             <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-[#f8fafc] mb-6 leading-tight flex flex-col items-start">
-              <span className="mb-2">🐾 Asistavet de Venezuela</span>
+              <span className="mb-2 text-white">{heroContent.title}</span>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-amber-400 to-orange-500 text-4xl sm:text-5xl md:text-6xl lg:text-6xl mt-1">
                 {heroContent.titleGradient}
               </span>
@@ -46,10 +48,50 @@ const HomePage = () => {
             </p>
           </motion.div>
 
+          {/* IMAGEN DERECHA (Mockup App) */}
+          <motion.div
+            style={{ perspective: 1200 }}
+            initial={{ opacity: 0, x: 50, scale: 0.9 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            transition={{ duration: 1, delay: 0.2 }}
+            className="w-full lg:w-1/2 relative mt-10 lg:mt-0"
+          >
+            {/* Glow/Resplandor Cósmico trasero */}
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-500/40 via-transparent to-amber-500/20 blur-[80px] rounded-[3rem] scale-110 pointer-events-none -z-10"></div>
+
+            {/* Marco de Imagen Flotante */}
+            <motion.div
+              animate={{ y: [0, -15, 0] }}
+              transition={{ repeat: Infinity, duration: 6, ease: "easeInOut" }}
+              className="relative p-2 md:p-3 bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl md:rounded-[2rem] shadow-[0_0_50px_rgba(249,115,22,0.15)]"
+            >
+              <motion.img
+                whileHover={{ rotateY: -5, rotateX: 5, scale: 1.02 }}
+                transition={{ duration: 0.4 }}
+                src={dashboardScreenshot}
+                alt="Panel Administrativo Moderno"
+                className="w-full h-auto rounded-xl md:rounded-3xl border border-white/5 object-cover"
+              />
+
+              {/* Tag Flotante 3D */}
+              <motion.div
+                animate={{ y: [0, -5, 0] }}
+                transition={{ repeat: Infinity, duration: 4, ease: "easeInOut", delay: 1 }}
+                className="absolute -bottom-6 -left-4 md:-left-8 bg-[#0f0f13]/90 border border-orange-500/30 backdrop-blur-xl p-3 md:p-4 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.5)] flex items-center gap-3 z-30"
+              >
+                <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.8)]"></div>
+                <div>
+                  <p className="text-white text-xs md:text-sm font-bold">100% Sincronizado</p>
+                  <p className="text-[10px] md:text-xs text-gray-400">Inventario en la Nube</p>
+                </div>
+              </motion.div>
+            </motion.div>
+          </motion.div>
+
           {/* Scroll Indicator */}
           <motion.div
             initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            animate={{ opacity: 0 }}
             transition={{ delay: 1.5, duration: 1 }}
             className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-orange-500/40 pointer-events-none z-30"
           >
@@ -67,9 +109,9 @@ const HomePage = () => {
           </Link>
         </div>
 
-        {/* 2. SECCIÓN ANIMACIÓN: Sticky Secuestro de Pantalla */}
-        <div className="relative w-full z-10 bg-[#020617] mt-[-10vh]">
-          <ScrollSequence />
+        {/* 2. SECCIÓN PLANES Y SUSCRIPCIONES SaaS */}
+        <div className="relative w-full z-10 bg-[#020617] mt-[-10vh] pt-10">
+          <PricingSection />
         </div>
 
         {/* WAVE DIVIDER: De Oscuro (Animación) a Claro (Service) */}

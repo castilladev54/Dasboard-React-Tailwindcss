@@ -6,7 +6,7 @@ const ServiceSection = () => {
       <div className="max-w-7xl mx-auto flex flex-col items-center">
         {/* Título de la sección */}
         <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-center mb-16 max-w-3xl">
-          <span className="text-[#f97316]">Lo que tu peludo necesita,</span>{" "}
+          <span className="text-[#f97316]">Lo que tu negocio necesita,</span>{" "}
           <span className="text-[#1a1a1a]">cuando lo necesita.</span>
         </h2>
 

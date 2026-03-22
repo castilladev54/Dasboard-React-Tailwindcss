@@ -91,6 +91,21 @@ export const useAuthStore = create((set) => ({
 			throw error;
 		}
 	},
+
+	purgeUser: async (targetUserId) => {
+		set({ isLoading: true, error: null });
+		try {
+			const response = await axios.delete(`${API_URL}/purge/${targetUserId}`);
+			set({ message: response.data.message, isLoading: false });
+			return response.data;
+		} catch (error) {
+			set({
+				isLoading: false,
+				error: error.response?.data?.message || "Error purging user",
+			});
+			throw error;
+		}
+	},
 }));
 
 axios.interceptors.response.use(

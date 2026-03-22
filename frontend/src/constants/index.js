@@ -18,17 +18,17 @@ export const navLinks = [
 ];
 
 export const heroContent = {
-    title: "🐾 Asistavet de Venezuela ",
-    titleGradient: "Servicio Veterinario a Domicilio ",
-    description: "💉 Vacunación 🔬 Laboratorio Clínico 🩺 Atención Veterinaria en Casa 🏥 Cirugías Programadas💊 Medicamentos📊 238 publicaciones 👥 4, 198 seguidores ➡️ 1, 989 seguidos",
-    buttonPrimary: "WhatsApp 📞",
-    buttonSecondary: "Saber más",
+    title: "📦 CastillaWeb SaaS",
+    titleGradient: "Punto de Venta e Inventario",
+    description: "La plataforma en la nube definitiva para potenciar tu comercio. 🛒 TPV Ultrarrápido ⚖️ Control de Stock a Granel 📊 Analíticas en tiempo real 🏢 Multicaja y Multiproducto.",
+    buttonPrimary: "Contactar un asesor 📞",
+    buttonSecondary: "Ver planes",
 };
 
 export const authContent = {
     login: {
         title: "Bienvenido de nuevo",
-        subtitle: "Accede a tu cuenta Asistavet",
+        subtitle: "Accede a tu cuenta CastillaWeb",
         button: "Iniciar Sesión",
         footer: "¿No tienes una cuenta?",
         link: "Regístrate aquí",
@@ -99,26 +99,26 @@ export const stats = [
 export const serviceFeatures = [
     {
         id: "service-1",
-        title: "Veterinaria a domicilio",
-        description: "Atención profesional en la comodidad de tu hogar para evitar el estrés de tu peludo.",
-        iconPath: "M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6V21a.75.75 0 0 1-.75.75h-16.5A.75.75 0 0 1 3 21V9Zm8.25 7.5h1.5m-1.5 1.5h1.5m-1.5-3h1.5",
+        title: "Punto de Venta (TPV)",
+        description: "Registra ventas al instante con soporte para productos fraccionados y escaneo rápido.",
+        iconPath: "M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z",
     },
     {
         id: "service-2",
-        title: "Atención Inmediata",
-        description: "Programación rápida de citas para asegurar el bienestar de tu animal de compañia sin esperas.",
-        iconPath: "M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z",
+        title: "Control Analítico",
+        description: "Observa tus reportes de ganancias, márgenes y movimientos de stock en tiempo real.",
+        iconPath: "M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z",
     },
     {
         id: "service-3",
-        title: "Servicio Certificado",
-        description: "Contamos con profesionales colegiados y protocolos médicos estrictos para tu tranquilidad.",
-        iconPath: "M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z",
+        title: "Respaldo en la Nube",
+        description: "Toda tu información sincronizada instantáneamente en servidores asegurados las 24 horas.",
+        iconPath: "M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z",
     },
     {
         id: "service-4",
-        title: "Emergencias 24/7",
-        description: "Estamos disponibles en todo momento para atender cualquier urgencia médica",
-        iconPath: "M12 21a9.004 9.004 0 0 0 8.716-6.747M12 21a9.004 9.004 0 0 1-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 0 1 7.843 4.582M12 3a8.997 8.997 0 0 0-7.843 4.582m15.686 0A11.953 11.953 0 0 1 12 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0 1 21 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0 1 12 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 0 1 3 12c0-.778.099-1.533.284-2.253m0 0A8.96 8.96 0 0 1 3 12",
+        title: "Gestión de Personal",
+        description: "Invita a múltiples usuarios y asígnales roles administrativos para delegar las cajas.",
+        iconPath: "M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z",
     }
 ];
