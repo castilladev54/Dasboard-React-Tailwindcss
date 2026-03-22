@@ -67,10 +67,7 @@ const LoginPage = () => {
 			</div>
 			<div className='px-8 py-4 bg-white/5 border-t border-white/10 flex justify-center relative z-10'>
 				<p className='text-sm text-white/60'>
-					{authContent.login.footer}{" "}
-					<Link to='/signup' className='text-amber-500 hover:text-amber-400 hover:underline'>
-						{authContent.login.link}
-					</Link>
+					{authContent.login.footer}
 				</p>
 			</div>
 		</motion.div>

@@ -1,6 +1,5 @@
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import NebulaBackground from "./components/NebulaBackground";
-import SignUpPage from "./pages/SignUpPage";
 import LoginPage from "./pages/LoginPage";
 import EmailVerificationPage from "./pages/EmailVerificationPage";
 import DashboardPage from "./pages/DashboardPage";
@@ -9,6 +8,7 @@ import LoadingSpinner from "./components/LoadingSpinner";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import HomePage from "./pages/HomePage";
 import Footer from "./components/Footer";
+import SubscriptionExpiredPage from "./pages/SubscriptionExpiredPage";
 import { Toaster } from "react-hot-toast";
 import { useAuthStore } from "./store/authStore";
 import { useEffect } from "react";
@@ -21,10 +21,6 @@ const ProtectedRoute = ({ children }) => {
     return <Navigate to="/login" replace />;
   }
 
-  if (!user.isVerified) {
-    return <Navigate to="/verify-email" replace />;
-  }
-
   return children;
 };
 
@@ -32,7 +28,7 @@ const ProtectedRoute = ({ children }) => {
 const RedirectAuthenticatedUser = ({ children }) => {
   const { isAuthenticated, user } = useAuthStore();
 
-  if (isAuthenticated && user.isVerified) {
+  if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -40,7 +36,7 @@ const RedirectAuthenticatedUser = ({ children }) => {
 };
 
 function App() {
-  const { isCheckingAuth, checkAuth } = useAuthStore();
+  const { isCheckingAuth, checkAuth, isSubscriptionExpired } = useAuthStore();
   const location = useLocation();
 
   useEffect(() => {
@@ -48,6 +44,18 @@ function App() {
   }, [checkAuth]);
 
   if (isCheckingAuth) return <LoadingSpinner />;
+
+  if (isSubscriptionExpired) {
+    return (
+      <div className="min-h-screen w-full bg-[#020617] relative overflow-x-hidden font-sans selection:bg-orange-500/30">
+        <div className="fixed inset-0 z-0">
+          <NebulaBackground />
+        </div>
+        <SubscriptionExpiredPage />
+        <Toaster />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen w-full bg-[#020617] relative overflow-x-hidden font-sans selection:bg-orange-500/30">
@@ -70,14 +78,6 @@ function App() {
                     <ProtectedRoute>
                       <DashboardPage />
                     </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/signup"
-                  element={
-                    <RedirectAuthenticatedUser>
-                      <SignUpPage />
-                    </RedirectAuthenticatedUser>
                   }
                 />
                 <Route

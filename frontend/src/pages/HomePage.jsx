@@ -65,11 +65,6 @@ const HomePage = () => {
               {heroContent.buttonPrimary}
             </Button>
           </Link>
-          <Link to="/signup" className="pointer-events-auto w-full sm:w-auto">
-            <button className="py-3 px-8 md:py-4 md:px-10 text-lg md:text-xl w-full font-semibold text-white/90 hover:text-white border border-white/10 hover:border-amber-500/50 hover:bg-white/5 bg-[#020617]/50 rounded-xl transition-all duration-300 backdrop-blur-md">
-              {heroContent.buttonSecondary}
-            </button>
-          </Link>
         </div>
 
         {/* 2. SECCIÓN ANIMACIÓN: Sticky Secuestro de Pantalla */}

@@ -16,7 +16,7 @@ const PurchaseManager = () => {
 
   const [supplier, setSupplier] = useState("");
   const [items, setItems] = useState([
-    { product_id: "", quantity: 1, unit_cost: 0 }
+    { product_id: "", quantity: 1, unit_cost: 0, unit_type: "unidad" }
   ]);
 
   useEffect(() => {
@@ -25,7 +25,7 @@ const PurchaseManager = () => {
   }, [fetchPurchases, fetchProducts]);
 
   const handleAddItem = () => {
-    setItems([...items, { product_id: "", quantity: 1, unit_cost: 0 }]);
+    setItems([...items, { product_id: "", quantity: 1, unit_cost: 0, unit_type: "unidad" }]);
   };
 
   const handleRemoveItem = (index) => {
@@ -36,6 +36,10 @@ const PurchaseManager = () => {
   const handleItemChange = (index, field, value) => {
     const newItems = [...items];
     newItems[index][field] = value;
+    if (field === 'product_id') {
+      const prod = products.find(p => p._id === value);
+      if (prod) newItems[index].unit_type = prod.unit_type || "unidad";
+    }
     setItems(newItems);
   };
 
@@ -48,7 +52,7 @@ const PurchaseManager = () => {
 
     for (let item of items) {
       if (!item.product_id) return toast.error("Selecciona un producto en todos los campos");
-      if (item.quantity <= 0) return toast.error("La cantidad debe ser mayor a 0");
+      if (parseFloat(item.quantity) <= 0 || isNaN(parseFloat(item.quantity))) return toast.error("La cantidad debe ser mayor a 0");
       if (item.unit_cost < 0) return toast.error("El costo unitario no puede ser negativo");
     }
 
@@ -57,7 +61,7 @@ const PurchaseManager = () => {
       supplier,
       items: items.map(item => ({
         product_id: item.product_id,
-        quantity: Number(item.quantity),
+        quantity: parseFloat(item.quantity) || 0,
         unit_cost: Number(item.unit_cost)
       }))
     };
@@ -67,7 +71,7 @@ const PurchaseManager = () => {
       toast.success("Compra/Entrada registrada con éxito");
       setIsFormOpen(false);
       setSupplier("");
-      setItems([{ product_id: "", quantity: 1, unit_cost: 0 }]);
+      setItems([{ product_id: "", quantity: 1, unit_cost: 0, unit_type: "unidad" }]);
     } catch (err) {
       toast.error(error || "Ocurrió un error al registrar la compra");
     }
@@ -76,7 +80,7 @@ const PurchaseManager = () => {
   const cancelForm = () => {
     setIsFormOpen(false);
     setSupplier("");
-    setItems([{ product_id: "", quantity: 1, unit_cost: 0 }]);
+    setItems([{ product_id: "", quantity: 1, unit_cost: 0, unit_type: "unidad" }]);
   };
 
   const handleViewDetail = async (id) => {
@@ -89,7 +93,7 @@ const PurchaseManager = () => {
   };
 
   // Calcular total de la compra en curso para preview
-  const currentTotal = items.reduce((acc, item) => acc + (Number(item.quantity) * Number(item.unit_cost)), 0);
+  const currentTotal = items.reduce((acc, item) => acc + ((parseFloat(item.quantity) || 0) * Number(item.unit_cost)), 0);
 
   return (
     <div className="w-full max-w-6xl mx-auto p-6">
@@ -170,7 +174,8 @@ const PurchaseManager = () => {
                       <label className="block text-xs text-gray-400 mb-1">Cantidad</label>
                       <input
                         type="number"
-                        min="1"
+                        min="0.01"
+                        step="0.01"
                         value={item.quantity}
                         onChange={(e) => handleItemChange(index, "quantity", e.target.value)}
                         required
@@ -194,7 +199,7 @@ const PurchaseManager = () => {
                     <div className="w-full md:w-32">
                       <label className="block text-xs text-gray-400 mb-1">Subtotal</label>
                       <div className="w-full bg-black/20 border border-white/5 rounded-lg px-3 py-2 text-gray-300 cursor-not-allowed">
-                        ${(Number(item.quantity) * Number(item.unit_cost)).toFixed(2)}
+                        ${((parseFloat(item.quantity) || 0) * Number(item.unit_cost)).toFixed(2)}
                       </div>
                     </div>
 
@@ -302,11 +307,11 @@ const PurchaseManager = () => {
                       <div className="text-xs text-gray-500 mt-1">ID: {item.product_id?._id || item.product_id}</div>
                     </td>
                     <td className="px-6 py-3 text-gray-300">
-                      <span className="bg-white/10 px-2 py-1 rounded text-sm">+ {item.quantity} unidades</span>
+                      <span className="bg-white/10 px-2 py-1 rounded text-sm">+ {item.quantity} {item.product_id?.unit_type && item.product_id?.unit_type !== 'unidad' ? item.product_id.unit_type : (item.quantity === 1 ? 'unidad' : 'unidades')}</span>
                     </td>
                     <td className="px-6 py-3 text-gray-300">${Number(item.unit_cost).toFixed(2)}</td>
                     <td className="px-6 py-3 text-amber-500 font-medium">
-                      ${(Number(item.quantity) * Number(item.unit_cost)).toFixed(2)}
+                      ${(parseFloat(item.quantity) * Number(item.unit_cost)).toFixed(2)}
                     </td>
                   </tr>
                 ))}

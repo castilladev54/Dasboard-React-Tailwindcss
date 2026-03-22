@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   Menu, Moon, Sun, ChevronLeft, Search, Home,
   TrendingUp, Store, ChevronDown, ClipboardCheck, Archive,
-  Bell, Settings, LogOut, Image as ImageIcon, Mic
+  Bell, Settings, LogOut, Image as ImageIcon, Mic, UserPlus
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 
@@ -140,6 +140,21 @@ const Sidebar = ({ isOpen, setIsOpen, activeTab, setActiveTab }) => {
                 {isOpen && <span className="font-medium whitespace-nowrap">Inventario</span>}
               </a>
             </li>
+
+            {/* Admin (Solo si el rol es admin) */}
+            {user?.role === "admin" && (
+              <>
+                <li>
+                  <button 
+                    onClick={() => setActiveTab("adminCreateUser")}
+                    className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors ${activeTab === 'adminCreateUser' ? 'bg-orange-500/10 text-orange-400 font-medium' : isDarkMode ? 'hover:bg-white/10' : 'hover:bg-gray-200'}`}
+                  >
+                    <UserPlus size={22} className="shrink-0 text-orange-400" />
+                    {isOpen && <span className="font-medium whitespace-nowrap">Crear Cliente</span>}
+                  </button>
+                </li>
+              </>
+            )}
 
             {/* Carpetas */}
             <li>

@@ -12,17 +12,9 @@ export const useAuthStore = create((set) => ({
 	isLoading: false,
 	isCheckingAuth: true,
 	message: null,
+	isSubscriptionExpired: false,
+	setSubscriptionExpired: (status) => set({ isSubscriptionExpired: status }),
 
-	signup: async (email, password, name) => {
-		set({ isLoading: true, error: null });
-		try {
-			const response = await axios.post(`${API_URL}/signup`, { email, password, name });
-			set({ user: response.data.user, isAuthenticated: true, isLoading: false });
-		} catch (error) {
-			set({ error: error.response.data.message || "Error signing up", isLoading: false });
-			throw error;
-		}
-	},
 	login: async (email, password) => {
 		set({ isLoading: true, error: null });
 		try {
@@ -43,20 +35,9 @@ export const useAuthStore = create((set) => ({
 		set({ isLoading: true, error: null });
 		try {
 			await axios.post(`${API_URL}/logout`);
-			set({ user: null, isAuthenticated: false, error: null, isLoading: false });
+			set({ user: null, isAuthenticated: false, error: null, isLoading: false, isSubscriptionExpired: false });
 		} catch (error) {
 			set({ error: "Error logging out", isLoading: false });
-			throw error;
-		}
-	},
-	verifyEmail: async (code) => {
-		set({ isLoading: true, error: null });
-		try {
-			const response = await axios.post(`${API_URL}/verify-email`, { code });
-			set({ user: response.data.user, isAuthenticated: true, isLoading: false });
-			return response.data;
-		} catch (error) {
-			set({ error: error.response.data.message || "Error verifying email", isLoading: false });
 			throw error;
 		}
 	},
@@ -95,4 +76,29 @@ export const useAuthStore = create((set) => ({
 			throw error;
 		}
 	},
+
+	createUserByAdmin: async (name, email, password) => {
+		set({ isLoading: true, error: null });
+		try {
+			const response = await axios.post(`${API_URL}/create-user`, { name, email, password });
+			set({ message: response.data.message, isLoading: false });
+			return response.data;
+		} catch (error) {
+			set({
+				isLoading: false,
+				error: error.response?.data?.message || "Error creating user",
+			});
+			throw error;
+		}
+	},
 }));
+
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 403 && error.response?.data?.message?.includes("Suscripción expirada")) {
+       useAuthStore.getState().setSubscriptionExpired(true);
+    }
+    return Promise.reject(error);
+  }
+);

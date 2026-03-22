@@ -52,7 +52,7 @@ const SalesManager = () => {
       newItems[existingItemIndex].quantity += 1;
       setItems(newItems);
     } else {
-      setItems([...items, { product_id: product._id, name: product.name, quantity: 1, unit_price: product.price, maxStock: product.stock }]);
+      setItems([...items, { product_id: product._id, name: product.name, quantity: 1, unit_price: product.price, maxStock: product.stock, unit_type: product.unit_type || "unidad" }]);
     }
   };
 
@@ -62,15 +62,15 @@ const SalesManager = () => {
   };
 
   const handleQuantityChange = (index, value) => {
-    const qty = parseInt(value, 10);
-    if (isNaN(qty) || qty < 1) return;
+    const qty = parseFloat(value);
+    if (value !== "" && (isNaN(qty) || qty < 0)) return;
     
     const newItems = [...items];
     if (qty > newItems[index].maxStock) {
       toast.error(`La cantidad no puede exceder el stock disponible (${newItems[index].maxStock})`);
       return;
     }
-    newItems[index].quantity = qty;
+    newItems[index].quantity = value;
     setItems(newItems);
   };
 
@@ -79,7 +79,7 @@ const SalesManager = () => {
 
     if (items.length === 0) return toast.error("Agrega al menos un artículo a la venta");
 
-    const total_amount = items.reduce((acc, item) => acc + (item.quantity * item.unit_price), 0);
+    const total_amount = items.reduce((acc, item) => acc + ((parseFloat(item.quantity) || 0) * item.unit_price), 0);
 
     const payload = {
       customer_id: user?._id || user?.id,
@@ -87,7 +87,7 @@ const SalesManager = () => {
       total_amount,
       items: items.map(item => ({
         product_id: item.product_id,
-        quantity: item.quantity,
+        quantity: parseFloat(item.quantity) || 0,
         unit_price: item.unit_price
       }))
     };
@@ -119,7 +119,7 @@ const SalesManager = () => {
     }
   };
 
-  const currentTotal = items.reduce((acc, item) => acc + (item.quantity * item.unit_price), 0);
+  const currentTotal = items.reduce((acc, item) => acc + ((parseFloat(item.quantity) || 0) * item.unit_price), 0);
 
   const filteredProducts = products.filter(p => 
     p.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -225,8 +225,8 @@ const SalesManager = () => {
                     onClick={() => handleAddItem(product)}
                   >
                     <div>
-                      <h4 className="text-white font-medium">{product.name}</h4>
-                      <p className="text-xs text-gray-400">Stock: {product.stock}</p>
+                      <h4 className="text-white font-medium">{product.name} {product.unit_type && product.unit_type !== "unidad" ? `(${product.unit_type})` : ""}</h4>
+                      <p className="text-xs text-gray-400">Stock: {product.stock} {product.unit_type && product.unit_type !== "unidad" ? product.unit_type : (product.stock === 1 ? 'ud' : 'uds')}</p>
                     </div>
                     <div className="text-right">
                       <div className="text-orange-400 font-bold">${Number(product.price).toFixed(2)}</div>
@@ -252,7 +252,7 @@ const SalesManager = () => {
                     items.map((item, index) => (
                       <div key={index} className="flex justify-between items-center bg-white/5 p-3 rounded-lg border border-white/5">
                         <div className="flex-1">
-                          <h5 className="text-white font-medium text-sm">{item.name}</h5>
+                          <h5 className="text-white font-medium text-sm">{item.name} {item.unit_type && item.unit_type !== "unidad" ? `(${item.unit_type})` : ""}</h5>
                           <div className="flex gap-3">
                             <span className="text-amber-500 font-bold text-sm">${item.unit_price.toFixed(2)}</span>
                             <span className="text-blue-400 text-xs leading-5">Bs {toBs(item.unit_price).toFixed(2)}</span>
@@ -261,11 +261,12 @@ const SalesManager = () => {
                         <div className="flex items-center gap-3">
                           <input 
                             type="number" 
-                            min="1"
+                            min="0.01"
+                            step="0.01"
                             max={item.maxStock}
                             value={item.quantity}
                             onChange={(e) => handleQuantityChange(index, e.target.value)}
-                            className="w-16 bg-black/50 border border-white/10 rounded-lg px-2 py-1 text-center text-white focus:outline-none focus:border-orange-500 transition"
+                            className="w-20 bg-black/50 border border-white/10 rounded-lg px-2 py-1 text-center text-white focus:outline-none focus:border-orange-500 transition"
                           />
                           <button
                             type="button"
@@ -394,13 +395,13 @@ const SalesManager = () => {
                        <span className="font-medium text-orange-400">{item.product_id?.name || 'Producto Desconocido'}</span>
                      </td>
                      <td className="px-6 py-3 text-gray-300">
-                       {item.quantity} unidades
+                       {item.quantity} {item.product_id?.unit_type && item.product_id?.unit_type !== "unidad" ? item.product_id.unit_type : (item.quantity === 1 ? 'unidad' : 'unidades')}
                      </td>
                      <td className="px-6 py-3 text-gray-300">${Number(item.unit_price).toFixed(2)}</td>
                      <td className="px-6 py-3 text-blue-400">Bs {toBs(Number(item.unit_price)).toFixed(2)}</td>
                      <td className="px-6 py-3">
-                       <div className="text-amber-500 font-medium">${(item.quantity * Number(item.unit_price)).toFixed(2)}</div>
-                       <div className="text-xs text-blue-400">Bs {toBs(item.quantity * Number(item.unit_price)).toFixed(2)}</div>
+                       <div className="text-amber-500 font-medium">${(parseFloat(item.quantity) * Number(item.unit_price)).toFixed(2)}</div>
+                       <div className="text-xs text-blue-400">Bs {toBs(parseFloat(item.quantity) * Number(item.unit_price)).toFixed(2)}</div>
                      </td>
                    </tr>
                  ))}

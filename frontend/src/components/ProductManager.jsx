@@ -19,7 +19,8 @@ const ProductManager = () => {
     description: "", 
     price: "", 
     stock: "", 
-    category: "" 
+    category: "",
+    unit_type: "unidad"
   });
 
   useEffect(() => {
@@ -39,7 +40,8 @@ const ProductManager = () => {
       description: product.description || "", 
       price: product.price, 
       stock: product.stock, 
-      category: product.category?._id || product.category || "" 
+      category: product.category?._id || product.category || "",
+      unit_type: product.unit_type || "unidad"
     });
     setIsFormOpen(true);
   };
@@ -74,7 +76,7 @@ const ProductManager = () => {
       }
       setIsFormOpen(false);
       setEditingId(null);
-      setFormData({ name: "", description: "", price: "", stock: "", category: "" });
+      setFormData({ name: "", description: "", price: "", stock: "", category: "", unit_type: "unidad" });
     } catch (err) {
       toast.error(error || "Ocurrió un error. Intenta de nuevo.");
     }
@@ -83,7 +85,7 @@ const ProductManager = () => {
   const cancelEdit = () => {
     setIsFormOpen(false);
     setEditingId(null);
-    setFormData({ name: "", description: "", price: "", stock: "", category: "" });
+    setFormData({ name: "", description: "", price: "", stock: "", category: "", unit_type: "unidad" });
   };
 
   return (
@@ -176,9 +178,26 @@ const ProductManager = () => {
                    onChange={handleInputChange} 
                    required
                    min="0"
+                   step="0.01"
                    placeholder="Ej. 50"
                    className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition"
                  />
+               </div>
+
+               <div>
+                 <label className="block text-sm font-medium text-gray-300 mb-1">Unidad de Medida</label>
+                 <select 
+                   name="unit_type" 
+                   value={formData.unit_type} 
+                   onChange={handleInputChange} 
+                   required
+                   className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition"
+                 >
+                   <option value="unidad">Unidad (ud)</option>
+                   <option value="kg">Kilogramos (kg)</option>
+                   <option value="litro">Litros (l)</option>
+                   <option value="metro">Metros (m)</option>
+                 </select>
                </div>
             </div>
             
@@ -281,7 +300,7 @@ const ProductManager = () => {
                     </td>
                     <td className="px-6 py-4">
                        <span className={`px-2 py-1 rounded-md text-xs font-medium ${prod.stock > 10 ? 'bg-green-500/10 text-green-400 border border-green-500/20' : prod.stock > 0 ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'}`}>
-                          {prod.stock} {prod.stock === 1 ? 'unidad' : 'unidades'}
+                          {prod.stock} {prod.unit_type && prod.unit_type !== 'unidad' ? prod.unit_type : (prod.stock === 1 ? 'unidad' : 'unidades')}
                        </span>
                     </td>
                     <td className="px-6 py-4 text-right">
