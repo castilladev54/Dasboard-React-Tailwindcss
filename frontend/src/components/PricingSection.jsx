@@ -4,7 +4,7 @@ import { CheckCircle2, Zap, Star, Crown } from "lucide-react";
 const plans = [
   {
     name: "Emprendedor",
-    price: "15",
+    price: "19.99",
     description: "Ideal para pequeños negocios y tiendas emergentes.",
     icon: <Star className="w-8 h-8 text-amber-500" />,
     features: [
@@ -19,7 +19,7 @@ const plans = [
   },
   {
     name: "Profesional",
-    price: "29",
+    price: "29.99",
     description: "El balance perfecto. Diseñado para minimarkets y comercios.",
     icon: <Zap className="w-8 h-8 text-amber-400" />,
     features: [
@@ -57,7 +57,7 @@ const PricingSection = () => {
 
       <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <motion.h2 
+          <motion.h2
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -65,7 +65,7 @@ const PricingSection = () => {
           >
             Escala con un software a tu medida
           </motion.h2>
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}

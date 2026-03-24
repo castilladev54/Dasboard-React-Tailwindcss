@@ -1,6 +1,7 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { Link } from "react-router-dom";
 import Button from "../components/Button";
+import { useAuthStore } from "../store/authStore";
 import ServiceSection from "../components/ServiceSection";
 import LocationSection from "../components/LocationSection";
 import { heroContent } from "../constants";
@@ -8,6 +9,7 @@ import PricingSection from "../components/PricingSection";
 import dashboardScreenshot from "../assets/dasboardcastilladev.jpg";
 
 const HomePage = () => {
+  const { isAuthenticated } = useAuthStore();
   // Rastrear el scroll global para la transición del Hero
   const { scrollY } = useScroll();
   // El Hero desaparece (opacidad 1 -> 0) y sube (y 0 -> -100) en los primeros 500px de scroll
@@ -17,6 +19,15 @@ const HomePage = () => {
   return (
     <>
       <main className="relative w-full bg-[#020617]">
+        {/* LOGIN BUTTON TOP RIGHT */}
+        <div className="absolute top-6 right-6 md:right-16 lg:right-24 z-50">
+          <Link to={isAuthenticated ? "/dashboard" : "/login"}>
+            <Button className="px-6 py-2.5 text-sm md:text-base border border-orange-500/20 backdrop-blur-sm">
+              {isAuthenticated ? "Ir al Dashboard" : "Iniciar Sesión"}
+            </Button>
+          </Link>
+        </div>
+
         {/* 1. SECCIÓN HERO: Layout dividido para el SaaS Mockup y Texto principal */}
         <motion.section
           style={{ opacity: heroOpacity, y: heroY }}
