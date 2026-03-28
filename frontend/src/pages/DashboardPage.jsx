@@ -24,7 +24,7 @@ const DashboardPage = () => {
   return (
     <>
       <Sidebar isOpen={isOpen} setIsOpen={setIsOpen} activeTab={activeTab} setActiveTab={setActiveTab} />
-      <main className={`transition-all duration-300 w-full pt-10 min-h-screen border-t-0 ${isOpen ? 'pl-64' : 'pl-20'}`}>
+      <main className={`transition-all duration-300 w-full pt-20 md:pt-10 min-h-screen border-t-0 ${isOpen ? 'md:pl-64' : 'md:pl-20'} pl-0`}>
         {activeTab === "categories" && <CategoryManager />}
         {activeTab === "products" && <ProductManager />}
         {activeTab === "purchases" && <PurchaseManager />}

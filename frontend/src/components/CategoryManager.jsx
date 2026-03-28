@@ -64,14 +64,14 @@ const CategoryManager = () => {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-6">
-      <div className="flex justify-between items-center mb-8">
-        <h2 className="text-3xl font-bold text-white tracking-wide">
+    <div className="w-full max-w-4xl mx-auto p-4 sm:p-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+        <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-wide">
           Gestión de <span className="text-orange-500">Categorías</span>
         </h2>
         
         {!isFormOpen && (
-          <Button variant="primary" onClick={() => setIsFormOpen(true)}>
+          <Button variant="primary" onClick={() => setIsFormOpen(true)} className="w-full sm:w-auto">
             <Plus size={20} />
             Nueva Categoría
           </Button>
@@ -163,10 +163,10 @@ const CategoryManager = () => {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-white/5 bg-black/20 text-gray-400 text-sm uppercase tracking-wider">
-                  <th className="px-6 py-4 font-medium">Nombre</th>
-                  <th className="px-6 py-4 font-medium">Descripción</th>
-                  <th className="px-6 py-4 font-medium text-right">Acciones</th>
+                <tr className="border-b border-white/5 bg-black/20 text-gray-400 text-xs sm:text-sm uppercase tracking-wider">
+                  <th className="px-4 py-3 sm:px-6 sm:py-4 font-medium">Nombre</th>
+                  <th className="hidden md:table-cell px-6 py-4 font-medium">Descripción</th>
+                  <th className="px-4 py-3 sm:px-6 sm:py-4 font-medium text-right">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
@@ -178,20 +178,20 @@ const CategoryManager = () => {
                     key={cat._id} 
                     className="hover:bg-white/5 transition-colors group"
                   >
-                    <td className="px-6 py-4">
-                      <div className="font-semibold text-white">{cat.name}</div>
-                      <div className="text-xs text-gray-500 mt-1">ID: {cat._id.slice(-6)}</div>
+                    <td className="px-4 py-3 sm:px-6 sm:py-4">
+                      <div className="font-semibold text-white text-sm sm:text-base">{cat.name}</div>
+                      <div className="text-[10px] sm:text-xs text-gray-500 mt-1">ID: {cat._id.slice(-6)}</div>
                     </td>
-                    <td className="px-6 py-4 text-gray-400 max-w-xs truncate" title={cat.description}>
+                    <td className="hidden md:table-cell px-6 py-4 text-gray-400 max-w-xs truncate" title={cat.description}>
                       {cat.description}
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                        <Button variant="icon" onClick={() => handleEdit(cat)} title="Editar" className="text-blue-400 hover:bg-blue-500/10">
-                          <Edit2 size={18} />
+                    <td className="px-4 py-3 sm:px-6 sm:py-4 text-right">
+                      <div className="flex items-center justify-end gap-1 sm:gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                        <Button variant="icon" onClick={() => handleEdit(cat)} title="Editar" className="text-blue-400 hover:bg-blue-500/10 p-1.5 sm:p-2">
+                          <Edit2 size={16} className="sm:w-[18px] sm:h-[18px]" />
                         </Button>
-                        <Button variant="icon" onClick={() => handleDelete(cat._id)} title="Eliminar" className="text-red-400 hover:bg-red-500/10">
-                          <Trash2 size={18} />
+                        <Button variant="icon" onClick={() => handleDelete(cat._id)} title="Eliminar" className="text-red-400 hover:bg-red-500/10 p-1.5 sm:p-2">
+                          <Trash2 size={16} className="sm:w-[18px] sm:h-[18px]" />
                         </Button>
                       </div>
                     </td>
