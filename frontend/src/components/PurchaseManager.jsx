@@ -149,14 +149,14 @@ const PurchaseManager = () => {
   const currentTotal = items.reduce((acc, item) => acc + ((parseFloat(item.quantity) || 0) * Number(item.unit_cost)), 0);
 
   return (
-    <div className="w-full max-w-6xl mx-auto p-6">
-      <div className="flex justify-between items-center mb-8">
-        <h2 className="text-3xl font-bold text-white tracking-wide">
+    <div className="w-full max-w-6xl mx-auto p-4 sm:p-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+        <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-wide">
           Gestión de <span className="text-orange-500">Compras</span>
         </h2>
 
         {!isFormOpen && !viewedPurchase && (
-          <Button variant="primary" onClick={() => setIsFormOpen(true)}>
+          <Button variant="primary" onClick={() => setIsFormOpen(true)} className="w-full sm:w-auto text-sm sm:text-base">
             <Plus size={20} />
             Nueva Entrada
           </Button>
@@ -191,14 +191,14 @@ const PurchaseManager = () => {
             </div>
 
             <div className="border border-white/5 bg-black/20 rounded-xl p-4">
-              <div className="flex justify-between items-center mb-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
                 <h4 className="text-lg font-medium text-white">Artículos</h4>
-                <div className="flex gap-2">
-                  <Button variant="ghost" size="sm" type="button" onClick={() => setIsScannerOpen(true)} className="text-blue-400 hover:text-blue-300">
+                <div className="flex flex-wrap sm:flex-nowrap gap-2 w-full sm:w-auto">
+                  <Button variant="ghost" size="sm" type="button" onClick={() => setIsScannerOpen(true)} className="text-blue-400 hover:text-blue-300 flex-1 sm:flex-none justify-center">
                     <Camera size={16} className="mr-1" /> Escanear
                   </Button>
-                  <Button variant="ghost" size="sm" type="button" onClick={handleAddItem} className="text-orange-400 hover:text-orange-300">
-                    <Plus size={16} /> Añadir Artículo
+                  <Button variant="ghost" size="sm" type="button" onClick={handleAddItem} className="text-orange-400 hover:text-orange-300 flex-1 sm:flex-none justify-center">
+                    <Plus size={16} className="mr-1" /> Añadir
                   </Button>
                 </div>
               </div>
@@ -382,12 +382,12 @@ const PurchaseManager = () => {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-white/5 bg-black/20 text-gray-400 text-sm uppercase tracking-wider">
-                    <th className="px-6 py-4 font-medium">Fecha</th>
-                    <th className="px-6 py-4 font-medium">Proveedor</th>
-                    <th className="px-6 py-4 font-medium">Items</th>
-                    <th className="px-6 py-4 font-medium">Total Costo</th>
-                    <th className="px-6 py-4 font-medium text-right">Acciones</th>
+                  <tr className="border-b border-white/5 bg-black/20 text-gray-400 text-xs sm:text-sm uppercase tracking-wider">
+                    <th className="px-3 py-3 sm:px-6 sm:py-4 font-medium">Fecha</th>
+                    <th className="px-3 py-3 sm:px-6 sm:py-4 font-medium">Proveedor</th>
+                    <th className="hidden md:table-cell px-6 py-4 font-medium">Items</th>
+                    <th className="px-3 py-3 sm:px-6 sm:py-4 font-medium">Total</th>
+                    <th className="px-3 py-3 sm:px-6 sm:py-4 font-medium text-right">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
@@ -399,24 +399,25 @@ const PurchaseManager = () => {
                       key={purchase._id}
                       className="hover:bg-white/5 transition-colors group"
                     >
-                      <td className="px-6 py-4 text-gray-300">
+                      <td className="px-3 py-3 sm:px-6 sm:py-4 text-gray-300 text-sm">
                         {new Date(purchase.createdAt || purchase.date).toLocaleDateString()}
-                        <div className="text-xs text-gray-500 mt-0.5">
+                        <div className="text-[10px] sm:text-xs text-gray-500 mt-0.5">
                           {new Date(purchase.createdAt || purchase.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-white font-medium">
-                        {purchase.supplier}
+                      <td className="px-3 py-3 sm:px-6 sm:py-4 text-white font-medium text-sm">
+                        <div className="max-w-[100px] sm:max-w-xs xl:max-w-md truncate" title={purchase.supplier}>{purchase.supplier}</div>
                       </td>
-                      <td className="px-6 py-4 text-gray-400">
+                      <td className="hidden md:table-cell px-6 py-4 text-gray-400 text-sm">
                         {purchase.items?.length || 0} ítems
                       </td>
-                      <td className="px-6 py-4 text-amber-500 font-medium">
+                      <td className="px-3 py-3 sm:px-6 sm:py-4 text-amber-500 font-medium text-sm">
                         ${Number(purchase.total_cost || 0).toFixed(2)}
                       </td>
-                      <td className="px-6 py-4 text-right">
-                        <Button variant="ghost" size="sm" onClick={() => handleViewDetail(purchase._id)} className="bg-white/5 hover:bg-white/10 text-orange-400">
-                          Ver Detalles
+                      <td className="px-3 py-3 sm:px-6 sm:py-4 text-right">
+                        <Button variant="ghost" size="sm" onClick={() => handleViewDetail(purchase._id)} className="bg-white/5 hover:bg-white/10 text-orange-400 px-2 sm:px-3 text-xs sm:text-sm">
+                          <span className="hidden sm:inline">Ver Detalles</span>
+                          <span className="sm:hidden">Detalles</span>
                         </Button>
                       </td>
                     </motion.tr>
