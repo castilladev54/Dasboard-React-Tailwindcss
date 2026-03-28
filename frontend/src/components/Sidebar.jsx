@@ -16,13 +16,35 @@ const Sidebar = ({ isOpen, setIsOpen, activeTab, setActiveTab }) => {
   };
 
   return (
-    <nav
-      className={`fixed top-0 left-0 h-screen transition-all duration-300 ease-in-out z-50 flex flex-col justify-between 
-        ${isDarkMode ? 'bg-[#0f0f13]/90 backdrop-blur-xl text-gray-300 border-r border-white/10' : 'bg-white/90 backdrop-blur-xl text-gray-800 border-r border-gray-200'}
-        ${isOpen ? 'w-64' : 'w-20'}
-      `}
-      aria-label="Main Navigation"
-    >
+    <>
+      {/* Mobile overlay */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+
+      {/* Floating hamburger button for mobile when sidebar is closed */}
+      {!isOpen && (
+        <button
+          onClick={() => setIsOpen(true)}
+          className={`md:hidden fixed top-4 left-4 z-50 p-2 rounded-lg transition-colors
+            ${isDarkMode ? 'bg-[#0f0f13]/90 text-white shadow-lg border border-white/10 hover:bg-white/10' : 'bg-white/90 text-black shadow-lg border border-gray-200 hover:bg-gray-100'}
+          `}
+          aria-label="Abrir menú"
+        >
+          <Menu size={24} />
+        </button>
+      )}
+
+      <nav
+        className={`fixed top-0 left-0 h-screen transition-all duration-300 ease-in-out z-50 flex flex-col justify-between 
+          ${isDarkMode ? 'bg-[#0f0f13]/90 backdrop-blur-xl text-gray-300 border-r border-white/10' : 'bg-white/90 backdrop-blur-xl text-gray-800 border-r border-gray-200'}
+          ${isOpen ? 'translate-x-0 w-64' : '-translate-x-full md:translate-x-0 md:w-20'}
+        `}
+        aria-label="Main Navigation"
+      >
       {/* Container to scroll the menu content */}
       <div className="flex flex-col h-full overflow-hidden">
         {/* Header */}
@@ -247,6 +269,7 @@ const Sidebar = ({ isOpen, setIsOpen, activeTab, setActiveTab }) => {
         }
       `}</style>
     </nav>
+    </>
   );
 };
 
