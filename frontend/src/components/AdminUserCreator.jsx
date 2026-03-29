@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { useAuthStore } from "../store/authStore";
 import toast from "react-hot-toast";
 import { UserPlus, Mail, Lock, User, Loader, ShieldCheck, Trash2, AlertOctagon, X } from "lucide-react";
-import Input from "./Input";
+import Input from "./atoms/Input";
 
 const AdminUserCreator = () => {
     const [name, setName] = useState("");

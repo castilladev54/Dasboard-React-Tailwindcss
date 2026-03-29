@@ -1,9 +1,13 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Plus, Edit2, Trash2, X, Check } from "lucide-react";
+import { Plus, Edit2, Trash2, Check } from "lucide-react";
 import { useCategoryStore } from "../store/categoryStore";
-import Button from "./Button";
+import Button from "./atoms/Button";
+import InputText from "./atoms/InputText";
+import TextArea from "./atoms/TextArea";
+import Label from "./atoms/Label";
 import Pagination from "./Pagination";
+import Modal from "./molecules/Modal";
 import toast from "react-hot-toast";
 
 const ITEMS_PER_PAGE = 10;
@@ -85,61 +89,46 @@ const CategoryManager = () => {
         )}
       </div>
 
-      {isFormOpen && (
-        <motion.div
-           initial={{ opacity: 0, height: 0, scale: 0.95 }}
-           animate={{ opacity: 1, height: "auto", scale: 1 }}
-           className="mb-8 p-6 bg-[#1a1a24] border border-white/10 rounded-2xl shadow-xl relative overflow-hidden"
-        >
-          <div className="absolute inset-0 bg-gradient-to-r from-orange-500/5 to-transparent pointer-events-none"></div>
+      <Modal 
+        isOpen={isFormOpen} 
+        onClose={cancelEdit} 
+        title={editingId ? "Editar Categoría" : "Agregar Nueva Categoría"}
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label>Nombre de la categoría</Label>
+            <InputText 
+              type="text" 
+              name="name" 
+              value={formData.name} 
+              onChange={handleInputChange} 
+              required
+              placeholder="Ej. Laptops, Teléfonos..."
+            />
+          </div>
           
-          <div className="flex justify-between items-center mb-4 relative z-10">
-            <h3 className="text-xl font-bold text-white">
-              {editingId ? "Editar Categoría" : "Agregar Nueva Categoría"}
-            </h3>
-            <Button variant="ghost" onClick={cancelEdit}>
-               <X size={24} />
-            </Button>
+          <div>
+            <Label>Descripción</Label>
+            <TextArea 
+              name="description" 
+              value={formData.description} 
+              onChange={handleInputChange} 
+              required
+              placeholder="Breve descripción de la categoría..."
+              rows="3"
+            />
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4 relative z-10">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Nombre de la categoría</label>
-              <input 
-                type="text" 
-                name="name" 
-                value={formData.name} 
-                onChange={handleInputChange} 
-                required
-                placeholder="Ej. Laptops, Teléfonos..."
-                className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Descripción</label>
-              <textarea 
-                name="description" 
-                value={formData.description} 
-                onChange={handleInputChange} 
-                required
-                placeholder="Breve descripción de la categoría..."
-                rows="3"
-                className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition resize-none"
-              ></textarea>
-            </div>
-
-            <div className="flex justify-end gap-3 pt-2">
-              <Button variant="secondary" type="button" onClick={cancelEdit}>
-                Cancelar
-              </Button>
-              <Button variant="primary" type="submit" isLoading={isLoading}>
-                <Check size={18} /> {editingId ? "Actualizar" : "Guardar"}
-              </Button>
-            </div>
-          </form>
-        </motion.div>
-      )}
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="secondary" type="button" onClick={cancelEdit}>
+              Cancelar
+            </Button>
+            <Button variant="primary" type="submit" isLoading={isLoading}>
+              <Check size={18} /> {editingId ? "Actualizar" : "Guardar"}
+            </Button>
+          </div>
+        </form>
+      </Modal>
 
       {/* ERROR HANDLER */}
       {error && !isFormOpen && (

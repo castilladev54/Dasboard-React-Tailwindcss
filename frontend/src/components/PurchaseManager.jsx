@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Plus, X, Check, PackageOpen, Trash2, Search, ArrowLeft } from "lucide-react";
+import { Plus, Check, PackageOpen, Trash2, Search, ArrowLeft } from "lucide-react";
 import { usePurchaseStore } from "../store/purchaseStore";
 import { useProductStore } from "../store/productStore";
 import { useAuthStore } from "../store/authStore";
-import Button from "./Button";
+import Button from "./atoms/Button";
+import InputText from "./atoms/InputText";
+import Label from "./atoms/Label";
 import Pagination from "./Pagination";
+import Modal from "./molecules/Modal";
 import toast from "react-hot-toast";
 import BarcodeScanner from "./BarcodeScanner";
 import { Camera, ScanBarcode } from "lucide-react";
@@ -171,124 +174,115 @@ const PurchaseManager = () => {
       </div>
 
       {/* FORMULARIO DE NUEVA COMPRA */}
-      {isFormOpen && (
-        <motion.div
-          initial={{ opacity: 0, height: 0, scale: 0.95 }}
-          animate={{ opacity: 1, height: "auto", scale: 1 }}
-          className="mb-8 p-6 bg-[#1a1a24] border border-white/10 rounded-2xl shadow-xl relative overflow-hidden"
-        >
-          <div className="flex justify-between items-center mb-6 relative z-10">
-            <h3 className="text-xl font-bold text-white">Registrar Nueva Compra / Entrada</h3>
-            <Button variant="ghost" onClick={cancelForm}>
-              <X size={24} />
-            </Button>
+      <Modal
+        isOpen={isFormOpen}
+        onClose={cancelForm}
+        title="Registrar Nueva Compra / Entrada"
+      >
+        <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
+          <div>
+            <Label>Nombre del Proveedor / Empresa</Label>
+            <InputText
+              type="text"
+              value={supplier}
+              onChange={(e) => setSupplier(e.target.value)}
+              required
+              placeholder="Ej. Distribuidora Mayorista S.A."
+              className="md:w-1/2"
+            />
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Nombre del Proveedor / Empresa</label>
-              <input
-                type="text"
-                value={supplier}
-                onChange={(e) => setSupplier(e.target.value)}
-                required
-                placeholder="Ej. Distribuidora Mayorista S.A."
-                className="w-full md:w-1/2 bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition"
-              />
+          <div className="border border-white/5 bg-black/20 rounded-xl p-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+              <h4 className="text-lg font-medium text-white">Artículos</h4>
+              <div className="flex flex-wrap sm:flex-nowrap gap-2 w-full sm:w-auto">
+                <Button variant="ghost" size="sm" type="button" onClick={() => setIsScannerOpen(true)} className="text-blue-400 hover:text-blue-300 flex-1 sm:flex-none justify-center">
+                  <Camera size={16} className="mr-1" /> Escanear
+                </Button>
+                <Button variant="ghost" size="sm" type="button" onClick={handleAddItem} className="text-orange-400 hover:text-orange-300 flex-1 sm:flex-none justify-center">
+                  <Plus size={16} className="mr-1" /> Añadir
+                </Button>
+              </div>
             </div>
 
-            <div className="border border-white/5 bg-black/20 rounded-xl p-4">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
-                <h4 className="text-lg font-medium text-white">Artículos</h4>
-                <div className="flex flex-wrap sm:flex-nowrap gap-2 w-full sm:w-auto">
-                  <Button variant="ghost" size="sm" type="button" onClick={() => setIsScannerOpen(true)} className="text-blue-400 hover:text-blue-300 flex-1 sm:flex-none justify-center">
-                    <Camera size={16} className="mr-1" /> Escanear
-                  </Button>
-                  <Button variant="ghost" size="sm" type="button" onClick={handleAddItem} className="text-orange-400 hover:text-orange-300 flex-1 sm:flex-none justify-center">
-                    <Plus size={16} className="mr-1" /> Añadir
-                  </Button>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                {items.map((item, index) => (
-                  <div key={index} className="flex flex-col md:flex-row gap-3 items-end bg-white/5 p-3 rounded-lg border border-white/5">
-                    <div className="flex-1 w-full relative">
-                      <label className="block text-xs text-gray-400 mb-1">Producto</label>
-                      <select
-                        value={item.product_id}
-                        onChange={(e) => handleItemChange(index, "product_id", e.target.value)}
-                        required
-                        className="w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-orange-500 transition"
-                      >
-                        <option value="" disabled>Seleccionar Producto</option>
-                        {products.map(p => (
-                          <option key={p._id} value={p._id}>{p.name} (Stock: {p.stock})</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="w-full md:w-32 relative">
-                      <label className="block text-xs text-gray-400 mb-1">Cantidad</label>
-                      <input
-                        type="number"
-                        min="0.01"
-                        step="0.01"
-                        value={item.quantity}
-                        onChange={(e) => handleItemChange(index, "quantity", e.target.value)}
-                        required
-                        className="w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-orange-500 transition"
-                      />
-                    </div>
-
-                    <div className="w-full md:w-32 relative">
-                      <label className="block text-xs text-gray-400 mb-1">Costo Unit. ($)</label>
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={item.unit_cost}
-                        onChange={(e) => handleItemChange(index, "unit_cost", e.target.value)}
-                        required
-                        className="w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-orange-500 transition"
-                      />
-                    </div>
-
-                    <div className="w-full md:w-32">
-                      <label className="block text-xs text-gray-400 mb-1">Subtotal</label>
-                      <div className="w-full bg-black/20 border border-white/5 rounded-lg px-3 py-2 text-gray-300 cursor-not-allowed">
-                        ${((parseFloat(item.quantity) || 0) * Number(item.unit_cost)).toFixed(2)}
-                      </div>
-                    </div>
-
-                    {items.length > 1 && (
-                      <Button variant="icon" type="button" onClick={() => handleRemoveItem(index)} title="Eliminar artículo" className="text-red-400 hover:bg-red-500/10 mb-0.5">
-                        <Trash2 size={20} />
-                      </Button>
-                    )}
+            <div className="space-y-3">
+              {items.map((item, index) => (
+                <div key={index} className="flex flex-col md:flex-row gap-3 items-end bg-white/5 p-3 rounded-lg border border-white/5">
+                  <div className="flex-1 w-full relative">
+                    <Label className="text-xs mb-1">Producto</Label>
+                    <select
+                      value={item.product_id}
+                      onChange={(e) => handleItemChange(index, "product_id", e.target.value)}
+                      required
+                      className="w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-orange-500 transition"
+                    >
+                      <option value="" disabled>Seleccionar Producto</option>
+                      {products.map(p => (
+                        <option key={p._id} value={p._id}>{p.name} (Stock: {p.stock})</option>
+                      ))}
+                    </select>
                   </div>
-                ))}
-              </div>
 
-              <div className="mt-4 flex justify-end">
-                <div className="text-right">
-                  <span className="text-gray-400 text-sm">Costo Total Estimado:</span>
-                  <div className="text-2xl font-bold text-amber-500">${currentTotal.toFixed(2)}</div>
+                  <div className="w-full md:w-32 relative">
+                    <Label className="text-xs mb-1">Cantidad</Label>
+                    <input
+                      type="number"
+                      min="0.01"
+                      step="0.01"
+                      value={item.quantity}
+                      onChange={(e) => handleItemChange(index, "quantity", e.target.value)}
+                      required
+                      className="w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-orange-500 transition"
+                    />
+                  </div>
+
+                  <div className="w-full md:w-32 relative">
+                    <Label className="text-xs mb-1">Costo Unit. ($)</Label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={item.unit_cost}
+                      onChange={(e) => handleItemChange(index, "unit_cost", e.target.value)}
+                      required
+                      className="w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-orange-500 transition"
+                    />
+                  </div>
+
+                  <div className="w-full md:w-32">
+                    <Label className="text-xs mb-1">Subtotal</Label>
+                    <div className="w-full bg-black/20 border border-white/5 rounded-lg px-3 py-2 text-gray-300 cursor-not-allowed">
+                      ${((parseFloat(item.quantity) || 0) * Number(item.unit_cost)).toFixed(2)}
+                    </div>
+                  </div>
+
+                  {items.length > 1 && (
+                    <Button variant="icon" type="button" onClick={() => handleRemoveItem(index)} title="Eliminar artículo" className="text-red-400 hover:bg-red-500/10 mb-0.5">
+                      <Trash2 size={20} />
+                    </Button>
+                  )}
                 </div>
-              </div>
+              ))}
             </div>
 
-            <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
-              <Button variant="secondary" type="button" onClick={cancelForm}>
-                Cancelar
-              </Button>
-              <Button variant="primary" type="submit" isLoading={isLoading}>
-                <Check size={18} /> Registrar Compra
-              </Button>
+            <div className="mt-4 flex justify-end">
+              <div className="text-right">
+                <span className="text-gray-400 text-sm">Costo Total Estimado:</span>
+                <div className="text-2xl font-bold text-amber-500">${currentTotal.toFixed(2)}</div>
+              </div>
             </div>
-          </form>
-        </motion.div>
-      )}
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+            <Button variant="secondary" type="button" onClick={cancelForm}>
+              Cancelar
+            </Button>
+            <Button variant="primary" type="submit" isLoading={isLoading}>
+              <Check size={18} /> Registrar Compra
+            </Button>
+          </div>
+        </form>
+      </Modal>
 
       {/* VISTA DETALLE DE COMPRA */}
       {viewedPurchase && !isFormOpen && (

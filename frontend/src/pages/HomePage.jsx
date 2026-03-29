@@ -1,6 +1,6 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { Link } from "react-router-dom";
-import Button from "../components/Button";
+import Button from "../components/atoms/Button";
 import { useAuthStore } from "../store/authStore";
 import ServiceSection from "../components/ServiceSection";
 import LocationSection from "../components/LocationSection";

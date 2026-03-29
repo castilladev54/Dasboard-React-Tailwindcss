@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Camera, RefreshCw, Volume2, VolumeX } from "lucide-react";
-import Button from "./Button";
+import Button from "./atoms/Button";
 import toast from "react-hot-toast";
 
 const BarcodeScanner = ({ onScan, onClose, isOpen }) => {

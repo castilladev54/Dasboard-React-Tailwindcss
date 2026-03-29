@@ -1,11 +1,15 @@
 import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, X, Check, ShoppingCart, Trash2, Search, ArrowLeft, RefreshCw, Calendar, Camera, ScanBarcode, HelpCircle, Keyboard } from "lucide-react";
+import { Plus, Check, ShoppingCart, Trash2, Search, ArrowLeft, RefreshCw, Calendar, Camera, ScanBarcode, HelpCircle, Keyboard } from "lucide-react";
 import { useSaleStore } from "../store/saleStore";
 import { useProductStore } from "../store/productStore";
 import { useAuthStore } from "../store/authStore";
 import { useCurrencyStore } from "../store/currencyStore";
-import Button from "./Button";
+import Button from "./atoms/Button";
+import InputText from "./atoms/InputText";
+import Label from "./atoms/Label";
+import Pagination from "./Pagination";
+import Modal from "./molecules/Modal";
 import toast from "react-hot-toast";
 import BarcodeScanner from "./BarcodeScanner";
 
@@ -361,13 +365,13 @@ const SalesManager = () => {
           {editingRate ? (
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-400">1 USD =</span>
-              <input
+              <InputText
                 type="number"
                 step="0.01"
                 min="0.01"
                 value={tempRate}
                 onChange={(e) => setTempRate(e.target.value)}
-                className="w-28 bg-black/50 border border-white/20 rounded-lg px-3 py-1 text-white text-sm focus:outline-none focus:border-blue-500 transition"
+                className="w-28 px-3 py-1 text-sm"
                 autoFocus
               />
               <span className="text-sm text-gray-400">Bs</span>
@@ -390,185 +394,176 @@ const SalesManager = () => {
       </div>
 
       {/* FORMULARIO DE NUEVA VENTA */}
-      {isFormOpen && (
-        <motion.div
-          initial={{ opacity: 0, height: 0, scale: 0.95 }}
-          animate={{ opacity: 1, height: "auto", scale: 1 }}
-          className="mb-8 p-6 bg-[#1a1a24] border border-white/10 rounded-2xl shadow-xl relative overflow-hidden"
-        >
-          <div className="flex justify-between items-center mb-6 relative z-10">
-            <h3 className="text-xl font-bold text-white">Registrar Nueva Venta</h3>
-            <Button variant="ghost" onClick={cancelForm}>
-              <X size={24} />
-            </Button>
+      <Modal
+        isOpen={isFormOpen}
+        onClose={cancelForm}
+        title="Registrar Nueva Venta"
+      >
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 relative z-10 w-full min-w-full sm:min-w-[500px] lg:min-w-[800px]">
+          {/* Buscador de productos */}
+          <div className="border border-white/5 bg-black/20 rounded-xl p-4 flex flex-col h-[400px] lg:h-[500px]">
+            <div className="relative mb-4 flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                <InputText
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder="Buscar producto..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      if (filteredProducts.length > 0) {
+                        handleAddItem(filteredProducts[0]);
+                        setSearchTerm("");
+                        // Focus the last item's quantity after React renders
+                        setTimeout(() => {
+                          const keys = Object.keys(qtyInputRefs.current);
+                          const lastKey = keys[keys.length - 1];
+                          if (lastKey && qtyInputRefs.current[lastKey]) {
+                            qtyInputRefs.current[lastKey].focus();
+                            qtyInputRefs.current[lastKey].select();
+                          }
+                        }, 50);
+                      } else if (searchTerm.length >= 5) {
+                        handleBarcodeScan(searchTerm);
+                      }
+                    }
+                  }}
+                  className="pl-10"
+                />
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => setIsScannerOpen(true)}
+                title="Escanear (F6)"
+                className="px-3 bg-white/5 border border-white/10 hover:bg-white/10"
+              >
+                <Camera size={20} />
+              </Button>
+            </div>
+            <div className="flex-1 overflow-y-auto pr-2 space-y-2">
+              {filteredProducts.map(product => (
+                <div
+                  key={product._id}
+                  className={`flex justify-between items-center p-3 rounded-lg border border-white/5 transition
+                    ${product.stock > 0 ? 'bg-white/5 hover:bg-white/10 cursor-pointer' : 'bg-red-500/5 opacity-50 cursor-not-allowed'}`}
+                  onClick={() => handleAddItem(product)}
+                >
+                  <div>
+                    <h4 className="text-white font-medium">{product.name} {product.unit_type && product.unit_type !== "unidad" ? `(${product.unit_type})` : ""}</h4>
+                    <p className="text-xs text-gray-400">Stock: {product.stock} {product.unit_type && product.unit_type !== "unidad" ? product.unit_type : (product.stock === 1 ? 'ud' : 'uds')}</p>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-orange-400 font-bold">${Number(product.price).toFixed(2)}</div>
+                    <div className="text-xs text-blue-400">Bs {toBs(product.price).toFixed(2)}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 relative z-10">
-            {/* Buscador de productos */}
-            <div className="border border-white/5 bg-black/20 rounded-xl p-4 flex flex-col h-[400px] lg:h-[500px]">
-              <div className="relative mb-4 flex gap-2">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                  <input
-                    ref={searchInputRef}
-                    type="text"
-                    placeholder="Buscar producto..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+          {/* Carrito de venta */}
+          <form onSubmit={handleSubmit} className="flex flex-col h-[450px] lg:h-[500px]">
+            <div className="border border-white/5 bg-black/20 rounded-xl p-4 flex-1 flex flex-col mb-4">
+              <h4 className="text-lg font-medium text-white mb-4">Carrito de Compra</h4>
+
+              <div className="flex-1 overflow-y-auto space-y-2 mb-4">
+                {items.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center text-gray-500">
+                    <ShoppingCart size={40} className="mb-2 opacity-50" />
+                    <p>El carrito está vacío</p>
+                  </div>
+                ) : (
+                  items.map((item, index) => (
+                    <div key={index} className="flex justify-between items-center bg-white/5 p-3 rounded-lg border border-white/5">
+                      <div className="flex-1">
+                        <h5 className="text-white font-medium text-sm">{item.name} {item.unit_type && item.unit_type !== "unidad" ? `(${item.unit_type})` : ""}</h5>
+                        <div className="flex gap-3">
+                          <span className="text-amber-500 font-bold text-sm">${item.unit_price.toFixed(2)}</span>
+                          <span className="text-blue-400 text-xs leading-5">Bs {toBs(item.unit_price).toFixed(2)}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <InputText
+                          ref={(el) => { if (el) qtyInputRefs.current[index] = el; else delete qtyInputRefs.current[index]; }}
+                          type="number"
+                          min="0.01"
+                          step="0.01"
+                          max={item.maxStock}
+                          value={item.quantity}
+                          onChange={(e) => handleQuantityChange(index, e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              // If there's a next item, focus its qty; otherwise focus payment
+                              if (qtyInputRefs.current[index + 1]) {
+                                qtyInputRefs.current[index + 1].focus();
+                                qtyInputRefs.current[index + 1].select();
+                              } else {
+                                paymentSelectRef.current?.focus();
+                              }
+                            }
+                          }}
+                          className="w-24 text-center py-1.5"
+                        />
+                        <Button variant="icon" type="button" onClick={() => handleRemoveItem(index)} className="text-red-400 hover:bg-red-500/10 mb-1.5">
+                          <Trash2 size={18} />
+                        </Button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="border-t border-white/10 pt-4 mt-auto">
+                <div className="mb-4">
+                  <Label>Método de Pago <KBD>F5</KBD></Label>
+                  <select
+                    ref={paymentSelectRef}
+                    value={paymentMethod}
+                    onChange={(e) => setPaymentMethod(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
-                        if (filteredProducts.length > 0) {
-                          handleAddItem(filteredProducts[0]);
-                          setSearchTerm("");
-                          // Focus the last item's quantity after React renders
-                          setTimeout(() => {
-                            const keys = Object.keys(qtyInputRefs.current);
-                            const lastKey = keys[keys.length - 1];
-                            if (lastKey && qtyInputRefs.current[lastKey]) {
-                              qtyInputRefs.current[lastKey].focus();
-                              qtyInputRefs.current[lastKey].select();
-                            }
-                          }, 50);
-                        } else if (searchTerm.length >= 5) {
-                          handleBarcodeScan(searchTerm);
-                        }
+                        submitBtnRef.current?.focus();
                       }
                     }}
-                    className="w-full bg-black/50 border border-white/10 rounded-xl pl-10 pr-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 transition"
-                  />
-                </div>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsScannerOpen(true)}
-                  title="Escanear (F6)"
-                  className="px-3 bg-white/5 border border-white/10 hover:bg-white/10"
-                >
-                  <Camera size={20} />
-                </Button>
-              </div>
-              <div className="flex-1 overflow-y-auto pr-2 space-y-2">
-                {filteredProducts.map(product => (
-                  <div
-                    key={product._id}
-                    className={`flex justify-between items-center p-3 rounded-lg border border-white/5 transition
-                      ${product.stock > 0 ? 'bg-white/5 hover:bg-white/10 cursor-pointer' : 'bg-red-500/5 opacity-50 cursor-not-allowed'}`}
-                    onClick={() => handleAddItem(product)}
+                    className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 transition"
+                    required
                   >
-                    <div>
-                      <h4 className="text-white font-medium">{product.name} {product.unit_type && product.unit_type !== "unidad" ? `(${product.unit_type})` : ""}</h4>
-                      <p className="text-xs text-gray-400">Stock: {product.stock} {product.unit_type && product.unit_type !== "unidad" ? product.unit_type : (product.stock === 1 ? 'ud' : 'uds')}</p>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-orange-400 font-bold">${Number(product.price).toFixed(2)}</div>
-                      <div className="text-xs text-blue-400">Bs {toBs(product.price).toFixed(2)}</div>
-                    </div>
+                    <option value="Efectivo">Efectivo</option>
+                    <option value="Efectivo Bs">Efectivo Bolívares</option>
+                    <option value="Tarjeta">Tarjeta (Crédito/Débito)</option>
+                    <option value="Transferencia">Transferencia Bancaria</option>
+                    <option value="Pago Movil">Pago Móvil</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <div className="flex justify-between items-end">
+                    <span className="text-gray-400">Total USD:</span>
+                    <div className="text-3xl font-bold text-amber-500">${currentTotal.toFixed(2)}</div>
                   </div>
-                ))}
+                  <div className="flex justify-between items-end">
+                    <span className="text-gray-400">Total Bs:</span>
+                    <div className="text-2xl font-bold text-blue-400">Bs {toBs(currentTotal).toFixed(2)}</div>
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Carrito de venta */}
-            <form onSubmit={handleSubmit} className="flex flex-col h-[450px] lg:h-[500px]">
-              <div className="border border-white/5 bg-black/20 rounded-xl p-4 flex-1 flex flex-col mb-4">
-                <h4 className="text-lg font-medium text-white mb-4">Carrito de Compra</h4>
-
-                <div className="flex-1 overflow-y-auto space-y-2 mb-4">
-                  {items.length === 0 ? (
-                    <div className="h-full flex flex-col items-center justify-center text-gray-500">
-                      <ShoppingCart size={40} className="mb-2 opacity-50" />
-                      <p>El carrito está vacío</p>
-                    </div>
-                  ) : (
-                    items.map((item, index) => (
-                      <div key={index} className="flex justify-between items-center bg-white/5 p-3 rounded-lg border border-white/5">
-                        <div className="flex-1">
-                          <h5 className="text-white font-medium text-sm">{item.name} {item.unit_type && item.unit_type !== "unidad" ? `(${item.unit_type})` : ""}</h5>
-                          <div className="flex gap-3">
-                            <span className="text-amber-500 font-bold text-sm">${item.unit_price.toFixed(2)}</span>
-                            <span className="text-blue-400 text-xs leading-5">Bs {toBs(item.unit_price).toFixed(2)}</span>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <input
-                            ref={(el) => { if (el) qtyInputRefs.current[index] = el; else delete qtyInputRefs.current[index]; }}
-                            type="number"
-                            min="0.01"
-                            step="0.01"
-                            max={item.maxStock}
-                            value={item.quantity}
-                            onChange={(e) => handleQuantityChange(index, e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault();
-                                // If there's a next item, focus its qty; otherwise focus payment
-                                if (qtyInputRefs.current[index + 1]) {
-                                  qtyInputRefs.current[index + 1].focus();
-                                  qtyInputRefs.current[index + 1].select();
-                                } else {
-                                  paymentSelectRef.current?.focus();
-                                }
-                              }
-                            }}
-                            className="w-20 bg-black/50 border border-white/10 rounded-lg px-2 py-1 text-center text-white focus:outline-none focus:border-orange-500 transition"
-                          />
-                          <Button variant="icon" type="button" onClick={() => handleRemoveItem(index)} className="text-red-400 hover:bg-red-500/10">
-                            <Trash2 size={18} />
-                          </Button>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-
-                <div className="border-t border-white/10 pt-4 mt-auto">
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-300 mb-1">Método de Pago <KBD>F5</KBD></label>
-                    <select
-                      ref={paymentSelectRef}
-                      value={paymentMethod}
-                      onChange={(e) => setPaymentMethod(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          submitBtnRef.current?.focus();
-                        }
-                      }}
-                      className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 transition"
-                      required
-                    >
-                      <option value="Efectivo">Efectivo</option>
-                      <option value="Efectivo Bs">Efectivo Bolívares</option>
-                      <option value="Tarjeta">Tarjeta (Crédito/Débito)</option>
-                      <option value="Transferencia">Transferencia Bancaria</option>
-                      <option value="Pago Movil">Pago Móvil</option>
-                    </select>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex justify-between items-end">
-                      <span className="text-gray-400">Total USD:</span>
-                      <div className="text-3xl font-bold text-amber-500">${currentTotal.toFixed(2)}</div>
-                    </div>
-                    <div className="flex justify-between items-end">
-                      <span className="text-gray-400">Total Bs:</span>
-                      <div className="text-2xl font-bold text-blue-400">Bs {toBs(currentTotal).toFixed(2)}</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex gap-3 mt-auto">
-                <Button variant="secondary" type="button" onClick={cancelForm} className="w-1/3 py-3">
-                  Cancelar
-                </Button>
-                <Button ref={submitBtnRef} variant="primary" type="submit" disabled={isLoading || items.length === 0} className="w-2/3 py-3">
-                  {isLoading ? "Procesando..." : <><Check size={20} /> Procesar Venta <KBD>F4</KBD></>}
-                </Button>
-              </div>
-            </form>
-          </div>
-        </motion.div>
-      )}
+            <div className="flex gap-3 mt-auto">
+              <Button variant="secondary" type="button" onClick={cancelForm} className="w-1/3 py-3">
+                Cancelar
+              </Button>
+              <Button ref={submitBtnRef} variant="primary" type="submit" disabled={isLoading || items.length === 0} className="w-2/3 py-3">
+                {isLoading ? "Procesando..." : <><Check size={20} /> Procesar Venta <KBD>F4</KBD></>}
+              </Button>
+            </div>
+          </form>
+        </div>
+      </Modal>
 
       {/* VISTA DETALLE DE VENTA */}
       {viewedSale && !isFormOpen && (

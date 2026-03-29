@@ -1,10 +1,14 @@
 import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { Plus, X, Check, ClipboardList, PackageOpen, Search, ArrowLeft, TriangleAlert, Info } from "lucide-react";
+import { Plus, Check, ClipboardList, PackageOpen, Search, ArrowLeft, TriangleAlert, Info } from "lucide-react";
 import { useAdjustmentStore } from "../store/adjustmentStore";
 import { useProductStore } from "../store/productStore";
-import Button from "./Button";
+import Button from "./atoms/Button";
+import InputText from "./atoms/InputText";
+import TextArea from "./atoms/TextArea";
+import Label from "./atoms/Label";
 import Pagination from "./Pagination";
+import Modal from "./molecules/Modal";
 import toast from "react-hot-toast";
 
 const ITEMS_PER_PAGE = 10;
@@ -125,139 +129,127 @@ const AdjustmentManager = () => {
       )}
 
       {/* FORMULARIO DE ADJUSTMENT */}
-      {isFormOpen && (
-        <motion.div
-           initial={{ opacity: 0, height: 0, scale: 0.95 }}
-           animate={{ opacity: 1, height: "auto", scale: 1 }}
-           className="mb-8 p-6 bg-[#1a1a24] border border-white/10 rounded-2xl shadow-xl relative overflow-hidden"
-        >
-          <div className="flex justify-between items-center mb-6 relative z-10">
-            <h3 className="text-xl font-bold text-white flex items-center gap-2">
-              <ClipboardList className="text-orange-500" />
-              Realizar Ajuste de Inventario
-            </h3>
-            <Button variant="ghost" onClick={() => setIsFormOpen(false)}>
-              <X size={24} />
+      <Modal
+        isOpen={isFormOpen}
+        onClose={() => setIsFormOpen(false)}
+        title="Realizar Ajuste de Inventario"
+        icon={<ClipboardList size={22} />}
+      >
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Paso 1 y 2: Selección y Muestra de Stock */}
+          {!selectedProduct ? (
+            <div className="bg-black/20 p-4 border border-white/5 rounded-xl">
+               <Label>1. Seleccionar Producto</Label>
+               <div className="relative mb-2">
+                 <div className="relative">
+                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={18} />
+                   <InputText
+                     ref={searchInputRef}
+                     type="text"
+                     placeholder="Escribe el nombre del producto o código..."
+                     value={searchTerm}
+                     onChange={(e) => setSearchTerm(e.target.value)}
+                     className="pl-10"
+                   />
+                 </div>
+               </div>
+
+               {searchTerm && (
+                 <div className="border border-white/5 bg-[#1a1a24] rounded-xl overflow-hidden mt-2 max-h-60 overflow-y-auto w-full">
+                   {filteredProducts.length === 0 ? (
+                     <div className="p-4 text-sm text-gray-500 text-center">No se encontraron productos coincidentes.</div>
+                   ) : (
+                     filteredProducts.map(prod => (
+                       <div 
+                         key={prod._id}
+                         onClick={() => handleSelectProduct(prod)}
+                         className="flex justify-between items-center p-3 border-b border-white/5 hover:bg-white/5 cursor-pointer transition text-sm sm:text-base text-gray-300"
+                       >
+                         <div>
+                            <span className="font-medium text-white block">{prod.name}</span>
+                            <span className="text-xs text-gray-500">Stock Actual: {prod.stock} {prod.unit_type === 'unidad' ? 'ud' : prod.unit_type}</span>
+                         </div>
+                       </div>
+                     ))
+                   )}
+                 </div>
+               )}
+            </div>
+          ) : (
+            <div className="bg-blue-500/5 p-4 border border-blue-500/20 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+               <div>
+                 <p className="text-sm font-medium text-gray-400 mb-1">Producto Seleccionado</p>
+                 <h4 className="text-xl font-bold text-white">{selectedProduct.name}</h4>
+                 <div className="flex items-center gap-2 mt-2">
+                    <div className="bg-black/40 text-blue-400 border border-blue-500/20 px-3 py-1 rounded text-sm font-semibold flex items-center gap-2">
+                      <Info size={16} />
+                      El sistema dice que tienes: 
+                      <span className="text-lg">{selectedProduct.stock}</span>
+                      {selectedProduct.unit_type === 'unidad' ? '' : selectedProduct.unit_type}
+                    </div>
+                 </div>
+               </div>
+               <Button variant="secondary" onClick={handleClearSelection} size="sm" type="button" className="shrink-0 w-full sm:w-auto">
+                 Cambiar Producto
+               </Button>
+            </div>
+          )}
+
+          {/* Pasos 3, 4 y 5 */}
+          {selectedProduct && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 rounded-xl border border-white/5 bg-black/20">
+              <div>
+                 <Label>2. Cantidad Física Real</Label>
+                 <div className="relative">
+                   <InputText
+                     type="number"
+                     min="0"
+                     step="0.01"
+                     required
+                     value={newStock}
+                     onChange={(e) => setNewStock(e.target.value)}
+                     placeholder="¿Cuánto hay en tus manos?"
+                     className="text-lg"
+                   />
+                   <div className="absolute top-full text-xs text-gray-500 mt-1">Escribe la cantidad total existente, no la diferencia.</div>
+                 </div>
+              </div>
+
+              <div>
+                 <Label>3. Motivo del Ajuste</Label>
+                 <select
+                   value={reason}
+                   onChange={(e) => setReason(e.target.value)}
+                   className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition"
+                 >
+                   {MOTIVOS.map(m => (
+                     <option key={m.value} value={m.value}>{m.label}</option>
+                   ))}
+                 </select>
+              </div>
+
+              <div className="md:col-span-2">
+                 <Label>Notas Opcionales</Label>
+                 <TextArea
+                   value={notes}
+                   onChange={(e) => setNotes(e.target.value)}
+                   placeholder="Ej: Encontré cajas selladas al fondo, Producto caducado, Error del conteo anterior..."
+                   rows="2"
+                 />
+              </div>
+            </div>
+          )}
+
+          <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 border-t border-white/10">
+            <Button variant="secondary" type="button" onClick={() => setIsFormOpen(false)} className="w-full sm:w-auto">
+              Cancelar
+            </Button>
+            <Button variant="primary" type="submit" isLoading={isLoading} disabled={!selectedProduct} className="w-full sm:w-auto">
+              <Check size={18} /> Confirmar Ajuste
             </Button>
           </div>
-
-          <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
-            {/* Paso 1 y 2: Selección y Muestra de Stock */}
-            {!selectedProduct ? (
-              <div className="bg-black/20 p-4 border border-white/5 rounded-xl">
-                 <label className="block text-sm font-medium text-gray-300 mb-2">1. Seleccionar Producto</label>
-                 <div className="relative mb-2">
-                   <div className="relative">
-                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={18} />
-                     <input
-                       ref={searchInputRef}
-                       type="text"
-                       placeholder="Escribe el nombre del producto o código..."
-                       value={searchTerm}
-                       onChange={(e) => setSearchTerm(e.target.value)}
-                       className="w-full bg-black/50 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 transition"
-                     />
-                   </div>
-                 </div>
-
-                 {searchTerm && (
-                   <div className="border border-white/5 bg-[#1a1a24] rounded-xl overflow-hidden mt-2 max-h-60 overflow-y-auto w-full">
-                     {filteredProducts.length === 0 ? (
-                       <div className="p-4 text-sm text-gray-500 text-center">No se encontraron productos coincidentes.</div>
-                     ) : (
-                       filteredProducts.map(prod => (
-                         <div 
-                           key={prod._id}
-                           onClick={() => handleSelectProduct(prod)}
-                           className="flex justify-between items-center p-3 border-b border-white/5 hover:bg-white/5 cursor-pointer transition text-sm sm:text-base text-gray-300"
-                         >
-                           <div>
-                              <span className="font-medium text-white block">{prod.name}</span>
-                              <span className="text-xs text-gray-500">Stock Actual: {prod.stock} {prod.unit_type === 'unidad' ? 'ud' : prod.unit_type}</span>
-                           </div>
-                         </div>
-                       ))
-                     )}
-                   </div>
-                 )}
-              </div>
-            ) : (
-              <div className="bg-blue-500/5 p-4 border border-blue-500/20 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                 <div>
-                   <p className="text-sm font-medium text-gray-400 mb-1">Producto Seleccionado</p>
-                   <h4 className="text-xl font-bold text-white">{selectedProduct.name}</h4>
-                   <div className="flex items-center gap-2 mt-2">
-                      <div className="bg-black/40 text-blue-400 border border-blue-500/20 px-3 py-1 rounded text-sm font-semibold flex items-center gap-2">
-                        <Info size={16} />
-                        El sistema dice que tienes: 
-                        <span className="text-lg">{selectedProduct.stock}</span>
-                        {selectedProduct.unit_type === 'unidad' ? '' : selectedProduct.unit_type}
-                      </div>
-                   </div>
-                 </div>
-                 <Button variant="secondary" onClick={handleClearSelection} size="sm" type="button" className="shrink-0 w-full sm:w-auto">
-                   Cambiar Producto
-                 </Button>
-              </div>
-            )}
-
-            {/* Pasos 3, 4 y 5 */}
-            {selectedProduct && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 rounded-xl border border-white/5 bg-black/20">
-                <div>
-                   <label className="block text-sm font-medium text-gray-300 mb-1">2. Cantidad Física Real</label>
-                   <div className="relative">
-                     <input
-                       type="number"
-                       min="0"
-                       step="0.01"
-                       required
-                       value={newStock}
-                       onChange={(e) => setNewStock(e.target.value)}
-                       placeholder="¿Cuánto hay en tus manos?"
-                       className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition text-lg"
-                     />
-                     <div className="absolute top-full text-xs text-gray-500 mt-1">Escribe la cantidad total existente, no la diferencia.</div>
-                   </div>
-                </div>
-
-                <div>
-                   <label className="block text-sm font-medium text-gray-300 mb-1">3. Motivo del Ajuste</label>
-                   <select
-                     value={reason}
-                     onChange={(e) => setReason(e.target.value)}
-                     className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition"
-                   >
-                     {MOTIVOS.map(m => (
-                       <option key={m.value} value={m.value}>{m.label}</option>
-                     ))}
-                   </select>
-                </div>
-
-                <div className="md:col-span-2">
-                   <label className="block text-sm font-medium text-gray-300 mb-1">Notas Opcionales</label>
-                   <textarea
-                     value={notes}
-                     onChange={(e) => setNotes(e.target.value)}
-                     placeholder="Ej: Encontré cajas selladas al fondo, Producto caducado, Error del conteo anterior..."
-                     rows="2"
-                     className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition"
-                   />
-                </div>
-              </div>
-            )}
-
-            <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 border-t border-white/10">
-              <Button variant="secondary" type="button" onClick={() => setIsFormOpen(false)} className="w-full sm:w-auto">
-                Cancelar
-              </Button>
-              <Button variant="primary" type="submit" isLoading={isLoading} disabled={!selectedProduct} className="w-full sm:w-auto">
-                <Check size={18} /> Confirmar Ajuste
-              </Button>
-            </div>
-          </form>
-        </motion.div>
-      )}
+        </form>
+      </Modal>
 
       {/* LISTA E HISTORIAL - KÁRDEX TABLA */}
       {!isFormOpen && (

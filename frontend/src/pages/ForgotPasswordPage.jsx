@@ -1,10 +1,10 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useAuthStore } from "../store/authStore";
-import Input from "../components/Input";
+import Input from "../components/atoms/Input";
 import { ArrowLeft, Loader, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
-import Button from "../components/Button";
+import Button from "../components/atoms/Button";
 import { authContent } from "../constants";
 
 const ForgotPasswordPage = () => {

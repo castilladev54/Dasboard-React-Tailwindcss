@@ -3,7 +3,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { useAuthStore } from "../store/authStore";
 import { formatDate } from "../utils/date";
-import Button from "../components/Button";
+import Button from "../components/atoms/Button";
 import { authContent } from "../constants";
 import Sidebar from "../components/Sidebar";
 import CategoryManager from "../components/CategoryManager";
