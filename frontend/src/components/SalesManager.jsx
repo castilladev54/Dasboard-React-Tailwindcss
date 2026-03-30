@@ -57,6 +57,13 @@ const SalesManager = () => {
     fetchProducts();
   }, [fetchSales, fetchProducts]);
 
+  // Autofocus search when scanner closes
+  useEffect(() => {
+    if (!isScannerOpen && isFormOpen) {
+      setTimeout(() => searchInputRef.current?.focus(), 100);
+    }
+  }, [isScannerOpen, isFormOpen]);
+
   const handleSaveRate = () => {
     setExchangeRate(tempRate);
     setEditingRate(false);

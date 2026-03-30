@@ -9,6 +9,7 @@ const BarcodeScanner = ({ onScan, onClose, isOpen, continuous = false }) => {
   const scannerRef = useRef(null);
   const [cameraFacingMode, setCameraFacingMode] = useState("environment"); // default back camera
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [permissionError, setPermissionError] = useState(null);
   const lastScanRef = useRef({ text: null, time: 0 });
 
   // Play beep sound on scan
@@ -21,11 +22,13 @@ const BarcodeScanner = ({ onScan, onClose, isOpen, continuous = false }) => {
   }, [soundEnabled]);
 
   const startScanner = useCallback(async (facingMode) => {
+    setPermissionError(null);
     if (!scannerRef.current) {
       try {
         scannerRef.current = new Html5Qrcode("scanner-container");
       } catch (e) {
         console.error("No se encontró el contenedor del escáner", e);
+        setPermissionError("No se pudo inicializar el escáner.");
         return;
       }
     }
@@ -77,8 +80,16 @@ const BarcodeScanner = ({ onScan, onClose, isOpen, continuous = false }) => {
       );
     } catch (err) {
       console.error("Camera error:", err);
-      toast.error("Error al acceder a la cámara. Permite los permisos necesarios.");
-      onClose();
+      let errorMsg = "Error al acceder a la cámara.";
+      
+      if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+        errorMsg = "Permiso denegado. Por favor, permite el acceso a la cámara en tu navegador.";
+      } else if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
+        errorMsg = "No se detectó ninguna cámara en este dispositivo.";
+      }
+      
+      setPermissionError(errorMsg);
+      toast.error(errorMsg);
     }
   }, [continuous, onScan, onClose, playBeep]);
 
@@ -137,27 +148,59 @@ const BarcodeScanner = ({ onScan, onClose, isOpen, continuous = false }) => {
           </div>
 
           {/* Scanner Area */}
-          <div className="relative aspect-video bg-black/40 flex items-center justify-center">
+          <div className="relative aspect-video bg-black/40 flex items-center justify-center overflow-hidden">
             <div id="scanner-container" className="w-full h-full"></div>
             
             {/* Overlay/Target Frame */}
-            <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center">
-              <div className="w-[260px] h-[160px] border-2 border-orange-500/50 rounded-xl relative">
-                  {/* Corner brackets */}
-                  <div className="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 border-orange-500 rounded-tl-lg"></div>
-                  <div className="absolute -top-1 -right-1 w-6 h-6 border-t-4 border-r-4 border-orange-500 rounded-tr-lg"></div>
-                  <div className="absolute -bottom-1 -left-1 w-6 h-6 border-b-4 border-l-4 border-orange-500 rounded-bl-lg"></div>
-                  <div className="absolute -bottom-1 -right-1 w-6 h-6 border-b-4 border-r-4 border-orange-500 rounded-br-lg"></div>
-                  
-                  {/* Scanning Animation Line */}
-                  <motion.div 
-                    animate={{ top: ["10%", "90%", "10%"] }}
-                    transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
-                    className="absolute left-2 right-2 h-0.5 bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,1)] z-10"
-                  />
+            {!permissionError && (
+              <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center">
+                <div className="w-[260px] h-[160px] border-2 border-orange-500/50 rounded-xl relative">
+                    {/* Corner brackets */}
+                    <div className="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 border-orange-500 rounded-tl-lg"></div>
+                    <div className="absolute -top-1 -right-1 w-6 h-6 border-t-4 border-r-4 border-orange-500 rounded-tr-lg"></div>
+                    <div className="absolute -bottom-1 -left-1 w-6 h-6 border-b-4 border-l-4 border-orange-500 rounded-bl-lg"></div>
+                    <div className="absolute -bottom-1 -right-1 w-6 h-6 border-b-4 border-r-4 border-orange-500 rounded-br-lg"></div>
+                    
+                    {/* Scanning Animation Line */}
+                    <motion.div 
+                      animate={{ top: ["10%", "90%", "10%"] }}
+                      transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+                      className="absolute left-2 right-2 h-0.5 bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,1)] z-10"
+                    />
+                </div>
+                <p className="text-white/60 text-xs mt-6 font-medium tracking-widest uppercase">Alinea el código de barras aquí</p>
               </div>
-              <p className="text-white/60 text-xs mt-6 font-medium tracking-widest uppercase">Alinea el código de barras aquí</p>
-            </div>
+            )}
+
+            {/* Error Message with Instructions */}
+            {permissionError && (
+              <div className="absolute inset-0 flex items-center justify-center p-6 bg-[#1a1a24]/90 backdrop-blur-sm z-20">
+                <div className="text-center max-w-sm">
+                  <div className="w-16 h-16 bg-red-500/20 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-500/30">
+                    <Camera size={32} />
+                  </div>
+                  <h4 className="text-white font-bold text-lg mb-2">Cámara Bloqueada</h4>
+                  <p className="text-gray-400 text-sm mb-6 leading-relaxed">
+                    Para usar el escáner, haz clic en el icono del <b>candado 🔒</b> en la barra de direcciones y activa la <b>Cámara</b>.
+                  </p>
+                  <div className="flex flex-col gap-3">
+                    <Button 
+                      variant="primary" 
+                      onClick={() => startScanner(cameraFacingMode)}
+                      className="w-full bg-orange-500 hover:bg-orange-600"
+                    >
+                      <RefreshCw size={18} className="mr-2" /> Reintentar
+                    </Button>
+                    <button 
+                      onClick={onClose}
+                      className="text-gray-400 hover:text-white text-sm font-medium transition"
+                    >
+                      Cerrar Escáner
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Controls */}
