@@ -5,7 +5,7 @@ import { X, Camera, RefreshCw, Volume2, VolumeX } from "lucide-react";
 import Button from "./atoms/Button";
 import toast from "react-hot-toast";
 
-const BarcodeScanner = ({ onScan, onClose, isOpen }) => {
+const BarcodeScanner = ({ onScan, onClose, isOpen, continuous = false }) => {
   const scannerRef = useRef(null);
   const [html5QrCode, setHtml5QrCode] = useState(null);
   const [isScanning, setIsScanning] = useState(false);
@@ -38,12 +38,25 @@ const BarcodeScanner = ({ onScan, onClose, isOpen }) => {
           playBeep();
           if (navigator.vibrate) navigator.vibrate(200);
           onScan(decodedText);
-          // Wait briefly before closing to show feedback
-          setTimeout(() => {
-            scanner.stop().then(() => {
-              onClose();
-            }).catch(console.error);
-          }, 300);
+          if (!continuous) {
+            setTimeout(() => {
+              scanner.stop().then(() => {
+                onClose();
+              }).catch(console.error);
+            }, 300);
+          } else {
+            // In continuous mode, pause briefly to prevent rapid duplicate scans
+            try {
+               scanner.pause();
+               setTimeout(() => {
+                  try {
+                    scanner.resume();
+                  } catch (e) { console.error("Could not resume", e) }
+               }, 1500);
+            } catch (e) {
+               console.error("Could not pause", e);
+            }
+          }
         },
         (errorMessage) => {
           // ignore scan errors

@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Check, ShoppingCart, Trash2, Search, ArrowLeft, RefreshCw, Calendar, Camera, ScanBarcode, HelpCircle, Keyboard } from "lucide-react";
+import { Plus, Check, ShoppingCart, Trash2, Search, ArrowLeft, RefreshCw, Calendar, Camera, ScanBarcode, HelpCircle, Keyboard, X } from "lucide-react";
 import { useSaleStore } from "../store/saleStore";
 import { useProductStore } from "../store/productStore";
 import { useAuthStore } from "../store/authStore";
@@ -44,6 +44,8 @@ const SalesManager = () => {
 
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [isCartDrawerOpen, setIsCartDrawerOpen] = useState(false);
+  const [cartPulse, setCartPulse] = useState(false);
   const { fetchProductByBarcode } = useProductStore();
   const searchInputRef = useRef(null);
   const submitBtnRef = useRef(null);
@@ -79,6 +81,8 @@ const SalesManager = () => {
     } else {
       setItems([...items, { product_id: product._id, name: product.name, quantity: 1, unit_price: product.price, maxStock: product.stock, unit_type: product.unit_type || "unidad" }]);
     }
+    setCartPulse(true);
+    setTimeout(() => setCartPulse(false), 300);
   };
 
   const handleRemoveItem = (index) => {
@@ -393,176 +397,244 @@ const SalesManager = () => {
         </div>
       </div>
 
-      {/* FORMULARIO DE NUEVA VENTA */}
-      <Modal
-        isOpen={isFormOpen}
-        onClose={cancelForm}
-        title="Registrar Nueva Venta"
-      >
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 relative z-10 w-full min-w-full sm:min-w-[500px] lg:min-w-[800px]">
-          {/* Buscador de productos */}
-          <div className="border border-white/5 bg-black/20 rounded-xl p-3 sm:p-4 flex flex-col h-[50vh] min-h-[300px] lg:h-[500px]">
-            <div className="relative mb-3 flex gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                <InputText
-                  ref={searchInputRef}
-                  type="text"
-                  placeholder="Buscar producto..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      if (filteredProducts.length > 0) {
-                        handleAddItem(filteredProducts[0]);
-                        setSearchTerm("");
-                        // Focus the last item's quantity after React renders
-                        setTimeout(() => {
-                          const keys = Object.keys(qtyInputRefs.current);
-                          const lastKey = keys[keys.length - 1];
-                          if (lastKey && qtyInputRefs.current[lastKey]) {
-                            qtyInputRefs.current[lastKey].focus();
-                            qtyInputRefs.current[lastKey].select();
-                          }
-                        }, 50);
-                      } else if (searchTerm.length >= 5) {
-                        handleBarcodeScan(searchTerm);
-                      }
-                    }
-                  }}
-                  className="pl-10 text-sm sm:text-base"
-                />
+      {/* FORMULARIO DE NUEVA VENTA FULLSCREEN RESPONSIBLE */}
+      <AnimatePresence>
+        {isFormOpen && (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 bg-[#0f0f13] flex flex-col font-sans overflow-hidden"
+          >
+            {/* TOP BAR: Resumen del Carrito */}
+            <div 
+              className="bg-[#1a1a24] border-b border-orange-500/20 p-3 sm:p-4 shadow-[0_4px_30px_rgba(0,0,0,0.5)] flex justify-between items-center cursor-pointer hover:bg-[#22222f] transition z-20"
+              onClick={() => setIsCartDrawerOpen(true)}
+            >
+              <div className="flex items-center gap-2 sm:gap-4">
+                <Button variant="ghost" onClick={(e) => { e.stopPropagation(); cancelForm(); }} className="p-2 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition">
+                  <ArrowLeft size={24} />
+                </Button>
+                <div className="flex flex-col">
+                  <span className="text-xs sm:text-sm text-gray-400 font-medium">Total de Venta</span>
+                  <motion.div 
+                    animate={cartPulse ? { scale: [1, 1.1, 1], color: ['#f59e0b', '#fbbf24', '#f59e0b'] } : {}}
+                    transition={{ duration: 0.3 }}
+                    className="text-xl sm:text-3xl font-bold text-amber-500 tracking-tight leading-none"
+                  >
+                    ${currentTotal.toFixed(2)}
+                  </motion.div>
+                </div>
               </div>
-              <Button
-                variant="outline"
-                onClick={() => setIsScannerOpen(true)}
-                title="Escanear (F6)"
-                className="px-3 bg-white/5 border border-white/10 hover:bg-white/10 shrink-0"
-              >
-                <Camera size={20} />
-              </Button>
-            </div>
-            <div className="flex-1 overflow-y-auto pr-1 sm:pr-2 space-y-2">
-              {filteredProducts.map(product => (
-                <div
-                  key={product._id}
-                  className={`flex justify-between items-center p-2 sm:p-3 rounded-lg border border-white/5 transition
-                    ${product.stock > 0 ? 'bg-white/5 hover:bg-white/10 cursor-pointer' : 'bg-red-500/5 opacity-50 cursor-not-allowed'}`}
-                  onClick={() => handleAddItem(product)}
-                >
-                  <div className="flex-1 truncate pr-2">
-                    <h4 className="text-white font-medium text-sm sm:text-base truncate">{product.name} {product.unit_type && product.unit_type !== "unidad" ? `(${product.unit_type})` : ""}</h4>
-                    <p className="text-xs text-gray-400">Stock: {product.stock} {product.unit_type && product.unit_type !== "unidad" ? product.unit_type : (product.stock === 1 ? 'ud' : 'uds')}</p>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <div className="text-orange-400 font-bold text-sm sm:text-base">${Number(product.price).toFixed(2)}</div>
-                    <div className="text-[10px] sm:text-xs text-blue-400">Bs {toBs(product.price).toFixed(2)}</div>
+
+              <div className="flex items-center gap-3 sm:gap-6">
+                <div className="text-right flex flex-col items-end">
+                  <span className="text-xs sm:text-sm text-gray-400 font-medium hidden sm:block">Artículos</span>
+                  <div className="bg-orange-500/20 text-orange-400 border border-orange-500/30 px-3 py-1 rounded-full text-sm sm:text-lg font-bold flex items-center gap-2">
+                    <ShoppingCart size={16} />
+                    {items.length}
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Carrito de venta */}
-          <form onSubmit={handleSubmit} className="flex flex-col h-[55vh] min-h-[350px] lg:h-[500px]">
-            <div className="border border-white/5 bg-black/20 rounded-xl p-3 sm:p-4 flex-1 flex flex-col mb-4">
-              <h4 className="text-base sm:text-lg font-medium text-white mb-3">Carrito de Compra</h4>
-
-              <div className="flex-1 overflow-y-auto pr-1 sm:pr-2 space-y-2 mb-4">
-                {items.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center text-gray-500">
-                    <ShoppingCart size={40} className="mb-2 opacity-50" />
-                    <p className="text-sm">El carrito está vacío</p>
-                  </div>
-                ) : (
-                  items.map((item, index) => (
-                    <div key={index} className="flex justify-between items-center bg-white/5 p-2 sm:p-3 rounded-lg border border-white/5">
-                      <div className="flex-1 truncate pr-2">
-                        <h5 className="text-white font-medium text-sm truncate">{item.name} {item.unit_type && item.unit_type !== "unidad" ? `(${item.unit_type})` : ""}</h5>
-                        <div className="flex gap-2 sm:gap-3 items-end">
-                          <span className="text-amber-500 font-bold text-xs sm:text-sm">${item.unit_price.toFixed(2)}</span>
-                          <span className="text-blue-400 text-[10px] sm:text-xs">Bs {toBs(item.unit_price).toFixed(2)}</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                        <InputText
-                          ref={(el) => { if (el) qtyInputRefs.current[index] = el; else delete qtyInputRefs.current[index]; }}
-                          type="number"
-                          min="0.01"
-                          step="0.01"
-                          max={item.maxStock}
-                          value={item.quantity}
-                          onChange={(e) => handleQuantityChange(index, e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              if (qtyInputRefs.current[index + 1]) {
-                                qtyInputRefs.current[index + 1].focus();
-                                qtyInputRefs.current[index + 1].select();
-                              } else {
-                                paymentSelectRef.current?.focus();
-                              }
-                            }
-                          }}
-                          className="w-16 sm:w-20 text-center py-1 px-1 text-sm bg-black/50"
-                        />
-                        <Button variant="ghost" size="sm" type="button" onClick={() => handleRemoveItem(index)} className="text-red-400 hover:bg-red-500/10 p-1 sm:p-2">
-                          <Trash2 size={16} />
-                        </Button>
-                      </div>
-                    </div>
-                  ))
-                )}
+                <Button 
+                  variant="primary" 
+                  className="rounded-full px-5 sm:px-8 py-2.5 sm:py-3 text-sm sm:text-base font-bold shadow-[0_0_15px_rgba(249,115,22,0.4)]"
+                  onClick={(e) => { e.stopPropagation(); setIsCartDrawerOpen(true); }}
+                >
+                  <span className="hidden sm:inline">Pagar</span>
+                  <span className="sm:hidden">Pagar</span>
+                </Button>
               </div>
+            </div>
 
-              <div className="border-t border-white/10 pt-3 mt-auto">
-                <div className="mb-3">
-                  <Label className="text-xs sm:text-sm">Método de Pago <KBD>F5</KBD></Label>
-                  <select
-                    ref={paymentSelectRef}
-                    value={paymentMethod}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
+            {/* MAIN AREA: Buscador, Escáner y Catálogo */}
+            <div className="flex-1 flex flex-col overflow-hidden bg-gradient-to-b from-[#1a1a24]/50 to-[#0f0f13] p-3 sm:p-6">
+              {/* Barra de Búsqueda y Escáner */}
+              <div className="flex gap-2 sm:gap-3 mb-4 sm:mb-6 max-w-4xl mx-auto w-full">
+                <div className="relative flex-1">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                  <InputText
+                    ref={searchInputRef}
+                    type="text"
+                    placeholder="Buscar producto..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
-                        submitBtnRef.current?.focus();
+                        if (filteredProducts.length > 0) {
+                          handleAddItem(filteredProducts[0]);
+                          setSearchTerm("");
+                        } else if (searchTerm.length >= 5) {
+                          handleBarcodeScan(searchTerm);
+                        }
                       }
                     }}
-                    className="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 transition text-sm"
-                    required
-                  >
-                    <option value="Efectivo">Efectivo</option>
-                    <option value="Efectivo Bs">Efectivo Bolívares</option>
-                    <option value="Tarjeta">Tarjeta (Crédito/Débito)</option>
-                    <option value="Transferencia">Transferencia Bancaria</option>
-                    <option value="Pago Movil">Pago Móvil</option>
-                  </select>
+                    className="pl-12 h-12 sm:h-14 text-base sm:text-lg bg-black/40 border-white/10 rounded-xl"
+                  />
+                  <KBD>F3</KBD>
                 </div>
-                <div className="flex items-end justify-between">
-                  <div className="text-left">
-                     <span className="block text-xs text-gray-400">Total Bs</span>
-                     <div className="text-lg sm:text-xl font-bold text-blue-400 leading-none mt-1">Bs {toBs(currentTotal).toFixed(2)}</div>
-                  </div>
-                  <div className="text-right">
-                     <span className="block text-xs text-gray-400">Total USD</span>
-                     <div className="text-2xl sm:text-3xl font-bold text-amber-500 leading-none mt-1">${currentTotal.toFixed(2)}</div>
-                  </div>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsScannerOpen(true)}
+                  title="Escanear (F6)"
+                  className="h-12 w-12 sm:h-14 sm:w-14 p-0 shrink-0 flex items-center justify-center bg-[#1a1a24] border-white/10 hover:bg-orange-500/10 hover:border-orange-500/30 hover:text-orange-400 rounded-xl transition"
+                >
+                  <Camera size={24} className="sm:w-[26px] sm:h-[26px]" />
+                </Button>
+              </div>
+
+              {/* Catálogo / Grid de Productos */}
+              <div className="flex-1 overflow-y-auto w-full max-w-6xl mx-auto hide-scrollbar pb-20">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+                  {filteredProducts.map(product => {
+                    const isInCart = items.find(i => i.product_id === product._id);
+                    return (
+                      <div
+                        key={product._id}
+                        className={`relative rounded-2xl border transition-all duration-200 overflow-hidden group
+                          ${product.stock > 0 
+                            ? 'bg-[#1a1a24] border-white/5 hover:border-orange-500/50 hover:shadow-lg hover:shadow-orange-500/10 cursor-pointer active:scale-95' 
+                            : 'bg-red-500/5 border-red-500/10 opacity-60 cursor-not-allowed'}`}
+                        onClick={() => product.stock > 0 && handleAddItem(product)}
+                      >
+                        <div className="p-3 sm:p-4 flex flex-col h-[110px] sm:h-[130px]">
+                           <div className="flex justify-between items-start mb-1 sm:mb-2">
+                             <div className="text-[10px] sm:text-xs font-bold text-gray-500 tracking-wider">STOCK: {product.stock}</div>
+                             {isInCart && (
+                               <div className="bg-orange-500 text-black text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full shadow-sm">
+                                  {isInCart.quantity}
+                               </div>
+                             )}
+                           </div>
+                           <h4 className="text-white font-medium text-xs sm:text-sm leading-tight mb-2 flex-1 line-clamp-2">
+                             {product.name} {product.unit_type && product.unit_type !== "unidad" ? `(${product.unit_type})` : ""}
+                           </h4>
+                           <div className="flex justify-between items-end mt-auto">
+                             <div className="text-[10px] sm:text-xs text-blue-400 font-medium">Bs {toBs(product.price).toFixed(2)}</div>
+                             <div className="text-orange-500 font-bold text-base sm:text-lg leading-none">${Number(product.price).toFixed(2)}</div>
+                           </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
 
-            <div className="flex gap-2 sm:gap-3 mt-auto">
-              <Button variant="secondary" type="button" onClick={cancelForm} className="w-1/3 py-2 sm:py-3 text-sm">
-                Cancelar
-              </Button>
-              <Button ref={submitBtnRef} variant="primary" type="submit" disabled={isLoading || items.length === 0} className="w-2/3 py-2 sm:py-3 text-sm">
-                {isLoading ? "Procesando..." : <><Check size={18} className="mr-1" /> Procesar <span className="hidden sm:inline">Venta</span> <KBD>F4</KBD></>}
-              </Button>
-            </div>
-          </form>
-        </div>
-      </Modal>
+            {/* CARRITO COMO DETALLE DESPLEGABLE (TOP SHEET MODAL) */}
+            <AnimatePresence>
+              {isCartDrawerOpen && (
+                <>
+                  <motion.div 
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                    className="absolute inset-0 z-30 bg-black/60 backdrop-blur-sm"
+                    onClick={() => setIsCartDrawerOpen(false)}
+                  />
+                  <motion.div 
+                    initial={{ y: '-100%' }} animate={{ y: 0 }} exit={{ y: '-100%' }}
+                    transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                    className="absolute top-0 left-0 right-0 z-40 bg-[#1a1a24] border-b border-orange-500/30 shadow-2xl shadow-orange-500/10 rounded-b-3xl flex flex-col max-h-[90vh]"
+                  >
+                    {/* Header del Carrito */}
+                    <div className="p-4 border-b border-white/5 flex justify-between items-center bg-black/20">
+                      <h3 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+                        <ShoppingCart className="text-orange-500" /> Detalle de Compra
+                      </h3>
+                      <button onClick={(e) => { e.stopPropagation(); setIsCartDrawerOpen(false); }} className="p-2 text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition">
+                        <X size={20} />
+                      </button>
+                    </div>
+
+                    {/* Lista de Items del Carrito */}
+                    <div className="p-4 sm:p-6 overflow-y-auto flex-1 min-h-[30vh]">
+                      {items.length === 0 ? (
+                        <div className="py-10 flex flex-col items-center justify-center text-gray-500">
+                          <ShoppingCart size={48} className="mb-4 opacity-30" />
+                          <p className="text-lg text-center">No has agregado productos</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {items.map((item, index) => (
+                            <div key={index} className="flex flex-col sm:flex-row sm:justify-between sm:items-center bg-black/30 p-3 sm:p-4 rounded-xl border border-white/5 group">
+                              <div className="flex-1 mb-3 sm:mb-0">
+                                <h5 className="text-white font-medium text-sm sm:text-base line-clamp-1">{item.name} {item.unit_type && item.unit_type !== "unidad" ? `(${item.unit_type})` : ""}</h5>
+                                <div className="flex gap-4 items-center mt-1">
+                                  <span className="text-orange-500 font-bold">${item.unit_price.toFixed(2)}</span>
+                                  <span className="text-blue-400 text-xs sm:text-sm font-medium">Bs {toBs(item.unit_price).toFixed(2)}</span>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+                                <div className="flex items-center gap-2 bg-[#1a1a24] rounded-xl border border-white/10 p-1">
+                                  <InputText
+                                    ref={(el) => { if (el) qtyInputRefs.current[index] = el; else delete qtyInputRefs.current[index]; }}
+                                    type="number" min="0.01" step="0.01" max={item.maxStock}
+                                    value={item.quantity}
+                                    onChange={(e) => handleQuantityChange(index, e.target.value)}
+                                    className="w-16 sm:w-20 text-center text-base sm:text-lg font-bold bg-transparent border-none h-10 p-0 focus:ring-0"
+                                  />
+                                </div>
+                                <div className="text-right w-20 sm:w-24 ml-auto">
+                                   <div className="text-amber-500 font-bold text-base sm:text-lg">${((parseFloat(item.quantity) || 0) * item.unit_price).toFixed(2)}</div>
+                                </div>
+                                <Button variant="ghost" type="button" onClick={() => handleRemoveItem(index)} className="text-red-400 hover:bg-red-500/20 hover:text-red-300 p-2 sm:p-3 rounded-xl ml-2">
+                                  <Trash2 size={20} />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Footer y Cobro */}
+                    <form onSubmit={handleSubmit} className="p-4 sm:p-6 bg-black/40 border-t border-white/5 rounded-b-3xl shrink-0">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 items-end">
+                        <div>
+                          <Label className="text-xs sm:text-sm font-medium text-gray-300 mb-2">Método de Pago <KBD>F5</KBD></Label>
+                          <select
+                            ref={paymentSelectRef}
+                            value={paymentMethod}
+                            onChange={(e) => setPaymentMethod(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); submitBtnRef.current?.focus(); } }}
+                            className="w-full bg-[#1a1a24] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition text-sm sm:text-base font-medium appearance-none"
+                            required
+                          >
+                            <option value="Efectivo">Efectivo</option>
+                            <option value="Efectivo Bs">Efectivo Bolívares</option>
+                            <option value="Tarjeta">Tarjeta (Crédito/Débito)</option>
+                            <option value="Transferencia">Transferencia Bancaria</option>
+                            <option value="Pago Movil">Pago Móvil</option>
+                          </select>
+                        </div>
+                        <div className="flex flex-col gap-2 sm:gap-3">
+                           <div className="flex justify-between items-center text-lg sm:text-xl font-bold text-gray-300">
+                             <span className="text-sm sm:text-base">Total Bs</span>
+                             <span className="text-blue-400">Bs {toBs(currentTotal).toFixed(2)}</span>
+                           </div>
+                           <div className="flex justify-between items-center text-xl sm:text-2xl font-bold text-white bg-orange-500/10 p-3 rounded-xl border border-orange-500/20">
+                             <span className="text-base sm:text-lg text-orange-400">Total a Pagar</span>
+                             <span className="text-orange-500">${currentTotal.toFixed(2)}</span>
+                           </div>
+                        </div>
+                      </div>
+                      <div className="mt-4 sm:mt-6">
+                        <Button 
+                          ref={submitBtnRef} variant="primary" type="submit" 
+                          disabled={isLoading || items.length === 0} 
+                          className="w-full py-4 text-base sm:text-lg rounded-xl shadow-[0_0_20px_rgba(249,115,22,0.3)] transition"
+                        >
+                          {isLoading ? "Procesando..." : <><Check size={24} className="mr-2" /> Procesar Pago <KBD>F4</KBD></>}
+                        </Button>
+                      </div>
+                    </form>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* VISTA DETALLE DE VENTA */}
       {viewedSale && !isFormOpen && (
@@ -757,6 +829,7 @@ const SalesManager = () => {
         isOpen={isScannerOpen}
         onClose={() => setIsScannerOpen(false)}
         onScan={handleBarcodeScan}
+        continuous={isFormOpen}
       />
 
       {/* ═══ HELP MODAL (F1) ═══ */}
