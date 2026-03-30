@@ -490,7 +490,7 @@ const SalesManager = () => {
                   title="Escanear (F6)"
                   className="h-12 w-12 sm:h-14 sm:w-14 p-0 shrink-0 flex items-center justify-center bg-[#1a1a24] border-white/10 hover:bg-orange-500/10 hover:border-orange-500/30 hover:text-orange-400 rounded-xl transition"
                 >
-                  <Camera size={24} className="sm:w-[26px] sm:h-[26px]" />
+                  <Camera className="w-6 h-6 sm:w-7 sm:h-7" />
                 </Button>
               </div>
 

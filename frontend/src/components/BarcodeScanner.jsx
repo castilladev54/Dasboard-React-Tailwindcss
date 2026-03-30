@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Camera, RefreshCw, Volume2, VolumeX } from "lucide-react";
@@ -7,76 +7,106 @@ import toast from "react-hot-toast";
 
 const BarcodeScanner = ({ onScan, onClose, isOpen, continuous = false }) => {
   const scannerRef = useRef(null);
-  const [html5QrCode, setHtml5QrCode] = useState(null);
-  const [isScanning, setIsScanning] = useState(false);
   const [cameraFacingMode, setCameraFacingMode] = useState("environment"); // default back camera
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const lastScanRef = useRef({ text: null, time: 0 });
 
   // Play beep sound on scan
-  const playBeep = () => {
+  const playBeep = useCallback(() => {
     if (!soundEnabled) return;
-    const beep = new Audio("/beep.mp3"); // Ensure this file exists in public folder or use a remote one
-    beep.play().catch(() => {}); // Catch browser blocking autoplay
-  };
+    try {
+      const beep = new Audio("/beep.mp3"); // Ensure this file exists in public folder or use a remote one
+      beep.play().catch(() => {}); // Catch browser blocking autoplay
+    } catch (e) {}
+  }, [soundEnabled]);
 
-  useEffect(() => {
-    if (isOpen) {
-      const scanner = new Html5Qrcode("scanner-container");
-      setHtml5QrCode(scanner);
-      setIsScanning(true);
+  const startScanner = useCallback(async (facingMode) => {
+    if (!scannerRef.current) {
+      try {
+        scannerRef.current = new Html5Qrcode("scanner-container");
+      } catch (e) {
+        console.error("No se encontró el contenedor del escáner", e);
+        return;
+      }
+    }
 
-      const config = {
-        fps: 10,
-        qrbox: { width: 250, height: 150 },
-        aspectRatio: 1.0,
-      };
+    if (scannerRef.current.isScanning) {
+      try {
+        await scannerRef.current.stop();
+      } catch (e) {
+        console.error("Error al detener escáner anterior:", e);
+      }
+    }
 
-      scanner.start(
-        { facingMode: cameraFacingMode },
+    const config = {
+      fps: 10,
+      qrbox: { width: 250, height: 150 },
+      aspectRatio: 1.0,
+    };
+
+    try {
+      await scannerRef.current.start(
+        { facingMode },
         config,
         (decodedText) => {
+          const now = Date.now();
+          if (continuous) {
+            if (lastScanRef.current.text === decodedText && (now - lastScanRef.current.time) < 1500) {
+              return; // Ignorar lecturas duplicadas rápidas
+            }
+            lastScanRef.current = { text: decodedText, time: now };
+          }
+
           playBeep();
           if (navigator.vibrate) navigator.vibrate(200);
           onScan(decodedText);
+
           if (!continuous) {
-            setTimeout(() => {
-              scanner.stop().then(() => {
+            if (scannerRef.current && scannerRef.current.isScanning) {
+              scannerRef.current.stop().then(() => {
                 onClose();
               }).catch(console.error);
-            }, 300);
-          } else {
-            // In continuous mode, pause briefly to prevent rapid duplicate scans
-            try {
-               scanner.pause();
-               setTimeout(() => {
-                  try {
-                    scanner.resume();
-                  } catch (e) { console.error("Could not resume", e) }
-               }, 1500);
-            } catch (e) {
-               console.error("Could not pause", e);
+            } else {
+              onClose();
             }
           }
         },
-        (errorMessage) => {
-          // ignore scan errors
+        () => {
+          // ignorar errores constantes de stream de escaneo
         }
-      ).catch((err) => {
-        console.error("Camera error:", err);
-        toast.error("Error al acceder a la cámara. Permite los permisos necesarios.");
-        onClose();
-      });
+      );
+    } catch (err) {
+      console.error("Camera error:", err);
+      toast.error("Error al acceder a la cámara. Permite los permisos necesarios.");
+      onClose();
+    }
+  }, [continuous, onScan, onClose, playBeep]);
+
+  useEffect(() => {
+    if (isOpen) {
+      // Delay for modal container to mount into DOM
+      const timer = setTimeout(() => startScanner(cameraFacingMode), 150);
 
       return () => {
-        if (scanner && scanner.isScanning) {
-          scanner.stop().catch(console.error);
+        clearTimeout(timer);
+        if (scannerRef.current) {
+          if (scannerRef.current.isScanning) {
+            scannerRef.current.stop().catch(console.error);
+          }
+          try {
+            scannerRef.current.clear();
+          } catch(e) {}
+          scannerRef.current = null;
         }
       };
     }
-  }, [isOpen, cameraFacingMode]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]); 
 
   const toggleCamera = () => {
-    setCameraFacingMode(prev => prev === "user" ? "environment" : "user");
+    const newMode = cameraFacingMode === "user" ? "environment" : "user";
+    setCameraFacingMode(newMode);
+    startScanner(newMode);
   };
 
   if (!isOpen) return null;
