@@ -11,7 +11,13 @@ const BarcodeScanner = ({ onScan, onClose, isOpen, continuous = false }) => {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [permissionError, setPermissionError] = useState(null);
   const [multiplier, setMultiplier] = useState(1);
+  const multiplierRef = useRef(multiplier);
   const lastScanRef = useRef({ text: null, time: 0 });
+
+  // Update ref when state changes
+  useEffect(() => {
+    multiplierRef.current = multiplier;
+  }, [multiplier]);
 
   // Play beep sound on scan
   const playBeep = useCallback(() => {
@@ -63,7 +69,7 @@ const BarcodeScanner = ({ onScan, onClose, isOpen, continuous = false }) => {
 
           playBeep();
           if (navigator.vibrate) navigator.vibrate(200);
-          onScan(decodedText, multiplier);
+          onScan(decodedText, multiplierRef.current);
 
           if (!continuous) {
             if (scannerRef.current && scannerRef.current.isScanning) {
