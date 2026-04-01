@@ -152,11 +152,26 @@ const SalesManager = () => {
 
   const handleBarcodeScan = async (code, qty = 1) => {
     try {
-      const { product } = await fetchProductByBarcode(code);
-      if (product) {
+      // 1. Buscar de forma local primero (más rápido y previene desincronización de stock del backend)
+      const localProduct = products.find(p => p.barcode === code || p._id === code);
+      
+      if (localProduct) {
+        handleAddItem(localProduct, qty);
+        toast.success(`Añadido: ${qty}x ${localProduct.name}`);
+        setSearchTerm("");
+        return;
+      }
+
+      // 2. Si no se encuentra localmente, intentar mediante la API
+      const response = await fetchProductByBarcode(code);
+      const product = response?.product || response;
+      
+      if (product && product._id) {
         handleAddItem(product, qty);
         toast.success(`Añadido: ${qty}x ${product.name}`);
         setSearchTerm("");
+      } else {
+        throw new Error("Producto no encontrado");
       }
     } catch (err) {
       toast.error(`Código de barras "${code}" no encontrado`);
