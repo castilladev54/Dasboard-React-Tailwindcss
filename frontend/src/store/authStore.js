@@ -35,7 +35,19 @@ export const useAuthStore = create((set) => ({
 		set({ isLoading: true, error: null });
 		try {
 			await axios.post(`${API_URL}/logout`);
+			
+			// Nivel 1: Destrucción de persistencia (Local y Session)
+			localStorage.clear();
+			sessionStorage.clear();
+			
+			// Nivel 3: Invalidación del cliente API
+			delete axios.defaults.headers.common['Authorization'];
+
+			// Nivel 2: Limpieza de Estado Global
 			set({ user: null, isAuthenticated: false, error: null, isLoading: false, isSubscriptionExpired: false });
+
+			// Redirección dura para purgar la memoria caché de React y SWR/React Query
+			window.location.replace('/login');
 		} catch (error) {
 			set({ error: "Error logging out", isLoading: false });
 			throw error;
