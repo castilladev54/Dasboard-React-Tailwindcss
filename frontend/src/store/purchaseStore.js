@@ -50,7 +50,7 @@ export const usePurchaseStore = create((set) => ({
   payPurchase: async (id, paymentData) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post(`${API_URL}/${id}/pay`, paymentData);
+      const response = await axios.put(`${API_URL}/${id}/pay`, paymentData);
       
       // Update the local purchase if found
       set((state) => ({
