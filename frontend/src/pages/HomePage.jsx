@@ -79,7 +79,6 @@ const HomePage = () => {
               <motion.img
                 whileHover={{ rotateY: -5, rotateX: 5, scale: 1.02 }}
                 transition={{ duration: 0.4 }}
-                src={dashboardScreenshot}
                 alt="Panel Administrativo Moderno"
                 className="w-full h-auto rounded-xl md:rounded-3xl border border-white/5 object-cover"
               />
