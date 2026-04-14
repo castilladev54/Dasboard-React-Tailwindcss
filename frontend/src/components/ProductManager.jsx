@@ -169,7 +169,8 @@ const ProductManager = () => {
         delete payload.stock_reason; // no enviar motivo si no hubo cambio
       }
     } else {
-      payload.stock = Number(formData.stock);
+      payload.stock_inicial = Number(formData.stock); // backend espera "stock_inicial"
+      delete payload.stock;                           // no enviar campo ambiguo
       delete payload.new_stock;
       delete payload.stock_reason;
     }
