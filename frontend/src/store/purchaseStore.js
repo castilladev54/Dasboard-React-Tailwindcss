@@ -7,6 +7,7 @@ axios.defaults.withCredentials = true;
 
 export const usePurchaseStore = create((set) => ({
   purchases: [],
+  payments: [],
   isLoading: false,
   error: null,
 
@@ -17,6 +18,16 @@ export const usePurchaseStore = create((set) => ({
       set({ purchases: response.data.purchases || response.data, isLoading: false });
     } catch (error) {
       set({ error: error.response?.data?.message || "Error al obtener el historial de compras", isLoading: false });
+    }
+  },
+
+  fetchPayments: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await axios.get(`${API_URL}/payments`);
+      set({ payments: response.data.payments || response.data, isLoading: false });
+    } catch (error) {
+      set({ error: error.response?.data?.message || "Error al obtener el historial de pagos", isLoading: false });
     }
   },
 

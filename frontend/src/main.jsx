@@ -4,6 +4,7 @@ import './index.css'
 import App from './App.jsx'
 import { BrowserRouter } from 'react-router-dom'
 import axios from 'axios'
+import toast from 'react-hot-toast'
 import { useAuthStore } from './store/authStore.js'
 
 // Configurar interceptor global para manejar errores 401 (token expirado o no enviado)
@@ -22,6 +23,17 @@ axios.interceptors.response.use(
         if (window.location.pathname !== '/login' && window.location.pathname !== '/') {
           window.location.href = '/login';
         }
+      }
+    } else if (error.response && error.response.status === 504) {
+      // SLA middleware: la operación excedió 1.5s — mostrar toast amigable
+      toast.error('El servidor está ocupado. Intenta de nuevo en unos segundos.', {
+        icon: '⏳',
+        duration: 4000,
+        id: 'sla-timeout', // evitar toasts duplicados
+      });
+      // Sobreescribir el mensaje técnico para que los stores muestren algo limpio
+      if (error.response.data) {
+        error.response.data.message = 'Tiempo de espera agotado. Intenta de nuevo.';
       }
     }
     return Promise.reject(error);

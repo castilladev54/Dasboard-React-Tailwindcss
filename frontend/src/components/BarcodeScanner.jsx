@@ -24,8 +24,8 @@ const BarcodeScanner = ({ onScan, onClose, isOpen, continuous = false }) => {
     if (!soundEnabled) return;
     try {
       const beep = new Audio("/beep.mp3"); // Ensure this file exists in public folder or use a remote one
-      beep.play().catch(() => {}); // Catch browser blocking autoplay
-    } catch (e) {}
+      beep.play().catch(() => { }); // Catch browser blocking autoplay
+    } catch (e) { }
   }, [soundEnabled]);
 
   const startScanner = useCallback(async (facingMode) => {
@@ -88,13 +88,13 @@ const BarcodeScanner = ({ onScan, onClose, isOpen, continuous = false }) => {
     } catch (err) {
       console.error("Camera error:", err);
       let errorMsg = "Error al acceder a la cámara.";
-      
+
       if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
         errorMsg = "Permiso denegado. Por favor, permite el acceso a la cámara en tu navegador.";
       } else if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
         errorMsg = "No se detectó ninguna cámara en este dispositivo.";
       }
-      
+
       setPermissionError(errorMsg);
       toast.error(errorMsg);
     }
@@ -113,13 +113,13 @@ const BarcodeScanner = ({ onScan, onClose, isOpen, continuous = false }) => {
           }
           try {
             scannerRef.current.clear();
-          } catch(e) {}
+          } catch (e) { }
           scannerRef.current = null;
         }
       };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen]); 
+  }, [isOpen]);
 
   const toggleCamera = () => {
     const newMode = cameraFacingMode === "user" ? "environment" : "user";
@@ -133,10 +133,10 @@ const BarcodeScanner = ({ onScan, onClose, isOpen, continuous = false }) => {
     <AnimatePresence>
       <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
         <motion.div
-           initial={{ opacity: 0, scale: 0.9 }}
-           animate={{ opacity: 1, scale: 1 }}
-           exit={{ opacity: 0, scale: 0.9 }}
-           className="relative w-full max-w-lg bg-[#1a1a24] border border-white/10 rounded-2xl shadow-2xl overflow-hidden"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.9 }}
+          className="relative w-full max-w-lg bg-[#1a1a24] border border-white/10 rounded-2xl shadow-2xl overflow-hidden"
         >
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-white/5 bg-black/20">
@@ -145,12 +145,12 @@ const BarcodeScanner = ({ onScan, onClose, isOpen, continuous = false }) => {
               <h3 className="text-lg font-bold text-white">Escanear Código</h3>
             </div>
             <div className="flex items-center gap-2">
-               <Button variant="ghost" size="sm" onClick={() => setSoundEnabled(!soundEnabled)} title={soundEnabled ? "Silenciar" : "Activar Sonido"}>
-                 {soundEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
-               </Button>
-               <button onClick={onClose} className="p-1 text-gray-400 hover:text-white transition">
-                 <X size={24} />
-               </button>
+              <Button variant="ghost" size="sm" onClick={() => setSoundEnabled(!soundEnabled)} title={soundEnabled ? "Silenciar" : "Activar Sonido"}>
+                {soundEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
+              </Button>
+              <button onClick={onClose} className="p-1 text-gray-400 hover:text-white transition">
+                <X size={24} />
+              </button>
             </div>
           </div>
 
@@ -162,8 +162,8 @@ const BarcodeScanner = ({ onScan, onClose, isOpen, continuous = false }) => {
                 key={num}
                 onClick={() => setMultiplier(num)}
                 className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-200 border-2
-                  ${multiplier === num 
-                    ? "bg-orange-500 border-orange-400 text-black shadow-[0_0_15px_rgba(249,115,22,0.4)] scale-110" 
+                  ${multiplier === num
+                    ? "bg-orange-500 border-orange-400 text-black shadow-[0_0_15px_rgba(249,115,22,0.4)] scale-110"
                     : "bg-white/5 border-white/10 text-gray-400 hover:border-white/20 hover:bg-white/10"}`}
               >
                 {num}x
@@ -174,23 +174,23 @@ const BarcodeScanner = ({ onScan, onClose, isOpen, continuous = false }) => {
           {/* Scanner Area */}
           <div className="relative aspect-video bg-black/40 flex items-center justify-center overflow-hidden">
             <div id="scanner-container" className="w-full h-full"></div>
-            
+
             {/* Overlay/Target Frame */}
             {!permissionError && (
               <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center">
                 <div className="w-[260px] h-[160px] border-2 border-orange-500/50 rounded-xl relative">
-                    {/* Corner brackets */}
-                    <div className="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 border-orange-500 rounded-tl-lg"></div>
-                    <div className="absolute -top-1 -right-1 w-6 h-6 border-t-4 border-r-4 border-orange-500 rounded-tr-lg"></div>
-                    <div className="absolute -bottom-1 -left-1 w-6 h-6 border-b-4 border-l-4 border-orange-500 rounded-bl-lg"></div>
-                    <div className="absolute -bottom-1 -right-1 w-6 h-6 border-b-4 border-r-4 border-orange-500 rounded-br-lg"></div>
-                    
-                    {/* Scanning Animation Line */}
-                    <motion.div 
-                      animate={{ top: ["10%", "90%", "10%"] }}
-                      transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
-                      className="absolute left-2 right-2 h-0.5 bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,1)] z-10"
-                    />
+                  {/* Corner brackets */}
+                  <div className="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 border-orange-500 rounded-tl-lg"></div>
+                  <div className="absolute -top-1 -right-1 w-6 h-6 border-t-4 border-r-4 border-orange-500 rounded-tr-lg"></div>
+                  <div className="absolute -bottom-1 -left-1 w-6 h-6 border-b-4 border-l-4 border-orange-500 rounded-bl-lg"></div>
+                  <div className="absolute -bottom-1 -right-1 w-6 h-6 border-b-4 border-r-4 border-orange-500 rounded-br-lg"></div>
+
+                  {/* Scanning Animation Line */}
+                  <motion.div
+                    animate={{ top: ["10%", "90%", "10%"] }}
+                    transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+                    className="absolute left-2 right-2 h-0.5 bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,1)] z-10"
+                  />
                 </div>
                 <p className="text-white/60 text-xs mt-6 font-medium tracking-widest uppercase">Alinea el código de barras aquí</p>
               </div>
@@ -208,14 +208,14 @@ const BarcodeScanner = ({ onScan, onClose, isOpen, continuous = false }) => {
                     Para usar el escáner, haz clic en el icono del <b>candado 🔒</b> en la barra de direcciones y activa la <b>Cámara</b>.
                   </p>
                   <div className="flex flex-col gap-3">
-                    <Button 
-                      variant="primary" 
+                    <Button
+                      variant="primary"
                       onClick={() => startScanner(cameraFacingMode)}
                       className="w-full bg-orange-500 hover:bg-orange-600"
                     >
                       <RefreshCw size={18} className="mr-2" /> Reintentar
                     </Button>
-                    <button 
+                    <button
                       onClick={onClose}
                       className="text-gray-400 hover:text-white text-sm font-medium transition"
                     >

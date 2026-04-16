@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus, Check, ShoppingCart, Trash2, Search, ArrowLeft,
-  RefreshCw, Calendar, Camera, HelpCircle, Keyboard, X,
+  RefreshCw, Calendar, Camera, HelpCircle, Keyboard, X, AlertTriangle,
 } from "lucide-react";
 import { useSaleStore }     from "../store/saleStore";
 import { useProductStore }  from "../store/productStore";
@@ -31,6 +31,20 @@ const DATE_FILTER_OPTIONS = [
 const fmtUSD = (v) => `$${Number(v || 0).toFixed(2)}`;
 const fmtBs  = (v, toBs) => `Bs ${toBs(Number(v || 0)).toFixed(2)}`;
 const itemSubtotal = (item) => (parseFloat(item.quantity) || 0) * item.unit_price;
+
+/** Calcula info de vencimiento de un producto (defensivo: no-op si no existe el campo) */
+const getExpirationInfo = (expirationDate) => {
+  if (!expirationDate) return null;
+  const now = new Date();
+  const exp = new Date(expirationDate);
+  if (isNaN(exp.getTime())) return null;
+  const diffMs = exp.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+  const label = exp.toLocaleDateString("es-VE", { day: "2-digit", month: "2-digit", year: "numeric" });
+  if (diffDays < 0) return { status: "expired", days: diffDays, label: `VENCIDO: ${label}`, color: "text-red-400 bg-red-500/15 border-red-500/20" };
+  if (diffDays <= 30) return { status: "warning", days: diffDays, label: `Vence: ${label}`, color: "text-yellow-400 bg-yellow-500/15 border-yellow-500/20" };
+  return { status: "ok", days: diffDays, label: `Vence: ${label}`, color: "text-gray-400 bg-white/5 border-white/10" };
+};
 
 const filterSalesByDate = (sales, filter) => {
   if (filter === "all") return sales;
@@ -97,38 +111,48 @@ const ExchangeRateBar = ({ exchangeRate, onRateChange }) => {
 /* ════════════════════════════════════════════════════════════
    SUBCOMPONENTE 2 — Tarjeta de producto del catálogo
 ════════════════════════════════════════════════════════════ */
-const ProductCard = ({ product, cartQty, onAdd, toBs }) => (
-  <div
-    onClick={() => product.stock > 0 && onAdd(product)}
-    role="button"
-    tabIndex={product.stock > 0 ? 0 : -1}
-    aria-label={`Agregar ${product.name} al carrito`}
-    aria-disabled={product.stock <= 0}
-    onKeyDown={(e) => e.key === "Enter" && product.stock > 0 && onAdd(product)}
-    className={`relative rounded-2xl border transition-all duration-200 overflow-hidden group
-      ${product.stock > 0
-        ? "bg-[#1a1a24] border-white/5 hover:border-orange-500/50 hover:shadow-lg hover:shadow-orange-500/10 cursor-pointer active:scale-95"
-        : "bg-red-500/5 border-red-500/10 opacity-60 cursor-not-allowed"}`}
-  >
-    <div className="p-3 sm:p-4 flex flex-col h-[110px] sm:h-[130px]">
-      <div className="flex justify-between items-start mb-1 sm:mb-2">
-        <span className="text-[10px] sm:text-xs font-bold text-gray-500 tracking-wider">STOCK: {product.stock}</span>
-        {cartQty > 0 && (
-          <span className="bg-orange-500 text-black text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full shadow-sm">
-            {cartQty}
-          </span>
+const ProductCard = ({ product, cartQty, onAdd, toBs }) => {
+  const expInfo = getExpirationInfo(product.expiration_date);
+  return (
+    <div
+      onClick={() => product.stock > 0 && onAdd(product)}
+      role="button"
+      tabIndex={product.stock > 0 ? 0 : -1}
+      aria-label={`Agregar ${product.name} al carrito`}
+      aria-disabled={product.stock <= 0}
+      onKeyDown={(e) => e.key === "Enter" && product.stock > 0 && onAdd(product)}
+      className={`relative rounded-2xl border transition-all duration-200 overflow-hidden group
+        ${product.stock > 0
+          ? "bg-[#1a1a24] border-white/5 hover:border-orange-500/50 hover:shadow-lg hover:shadow-orange-500/10 cursor-pointer active:scale-95"
+          : "bg-red-500/5 border-red-500/10 opacity-60 cursor-not-allowed"}`}
+    >
+      <div className={`p-3 sm:p-4 flex flex-col ${expInfo ? "h-[130px] sm:h-[155px]" : "h-[110px] sm:h-[130px]"}`}>
+        <div className="flex justify-between items-start mb-1 sm:mb-2">
+          <span className="text-[10px] sm:text-xs font-bold text-gray-500 tracking-wider">STOCK: {product.stock}</span>
+          {cartQty > 0 && (
+            <span className="bg-orange-500 text-black text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full shadow-sm">
+              {cartQty}
+            </span>
+          )}
+        </div>
+        <h4 className="text-white font-medium text-xs sm:text-sm leading-tight mb-2 flex-1 line-clamp-2">
+          {product.name}{product.unit_type && product.unit_type !== "unidad" ? ` (${product.unit_type})` : ""}
+        </h4>
+        <div className="flex justify-between items-end mt-auto">
+          <span className="text-[10px] sm:text-xs text-blue-400 font-medium">{fmtBs(product.price, toBs)}</span>
+          <span className="text-orange-500 font-bold text-base sm:text-lg leading-none">{fmtUSD(product.price)}</span>
+        </div>
+        {/* Badge de fecha de vencimiento — solo se muestra si el backend envía expiration_date */}
+        {expInfo && (
+          <div className={`flex items-center gap-1 mt-1.5 px-2 py-0.5 rounded-lg border text-[9px] sm:text-[10px] font-semibold tracking-wide w-fit ${expInfo.color}`}>
+            {expInfo.status !== "ok" && <AlertTriangle size={10} aria-hidden="true" />}
+            <span>{expInfo.label}</span>
+          </div>
         )}
       </div>
-      <h4 className="text-white font-medium text-xs sm:text-sm leading-tight mb-2 flex-1 line-clamp-2">
-        {product.name}{product.unit_type && product.unit_type !== "unidad" ? ` (${product.unit_type})` : ""}
-      </h4>
-      <div className="flex justify-between items-end mt-auto">
-        <span className="text-[10px] sm:text-xs text-blue-400 font-medium">{fmtBs(product.price, toBs)}</span>
-        <span className="text-orange-500 font-bold text-base sm:text-lg leading-none">{fmtUSD(product.price)}</span>
-      </div>
     </div>
-  </div>
-);
+  );
+};
 
 /* ════════════════════════════════════════════════════════════
    SUBCOMPONENTE 3 — Carrito drawer (top sheet)
@@ -700,13 +724,34 @@ const SalesManager = () => {
 
   /* ── Barcode scan ── */
   const handleBarcodeScan = useCallback(async (code, qty = 1) => {
+    /** Muestra toast de vencimiento solo si es urgente (no molestar en caso normal) */
+    const notifyExpiration = (prod) => {
+      const info = getExpirationInfo(prod.expiration_date);
+      if (!info) return;
+      if (info.status === "expired") {
+        toast.error(`⚠️ ${prod.name} está VENCIDO (${info.label})`, { duration: 5000 });
+      } else if (info.status === "warning") {
+        toast(`${prod.name} vence pronto — ${info.days} días restantes`, { icon: "⚠️", duration: 4000 });
+      }
+    };
+
     const local = products.find((p) => p.barcode === code || p._id === code);
-    if (local) { handleAddItem(local, qty); toast.success(`Añadido: ${qty}x ${local.name}`); setSearchTerm(""); return; }
+    if (local) {
+      handleAddItem(local, qty);
+      toast.success(`Añadido: ${qty}x ${local.name}`);
+      notifyExpiration(local);
+      setSearchTerm("");
+      return;
+    }
     try {
       const res = await fetchProductByBarcode(code);
       const product = res?.product || res;
-      if (product?._id) { handleAddItem(product, qty); toast.success(`Añadido: ${qty}x ${product.name}`); setSearchTerm(""); }
-      else throw new Error();
+      if (product?._id) {
+        handleAddItem(product, qty);
+        toast.success(`Añadido: ${qty}x ${product.name}`);
+        notifyExpiration(product);
+        setSearchTerm("");
+      } else throw new Error();
     } catch { toast.error(`Código "${code}" no encontrado`); }
   }, [products, handleAddItem, fetchProductByBarcode]);
 

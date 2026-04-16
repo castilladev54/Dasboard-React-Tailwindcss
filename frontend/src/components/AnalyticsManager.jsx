@@ -101,16 +101,20 @@ const fmtKey = (key) => { const [y, m, d] = key.split('-'); return `${d}/${m}/${
 /* ─── Componente principal ───────────────────────────────── */
 const AnalyticsManager = () => {
   const { sales, fetchSales, isLoading: isLoadingSales } = useSaleStore();
-  const { purchases, fetchPurchases, isLoading: isLoadingPurchases } = usePurchaseStore();
+  const { purchases, fetchPurchases, payments, fetchPayments, isLoading: isLoadingPurchases } = usePurchaseStore();
   const [dateFilter, setDateFilter] = useState('all');
 
-  useEffect(() => { fetchSales(); fetchPurchases(); }, [fetchSales, fetchPurchases]);
+  useEffect(() => { 
+    fetchSales(); 
+    fetchPurchases(); 
+    fetchPayments(); 
+  }, [fetchSales, fetchPurchases, fetchPayments]);
 
   const isLoading = isLoadingSales || isLoadingPurchases;
 
   const { chartData, totalSales, totalPurchases, netProfit } = useMemo(() => {
     const filteredSales = filterByDate(sales, dateFilter);
-    const filteredPurchases = filterByDate(purchases, dateFilter);
+    const filteredPayments = filterByDate(payments, dateFilter);
 
     const salesByDay = {};
     const purchasesByDay = {};
@@ -123,18 +127,13 @@ const AnalyticsManager = () => {
       tSales += amt;
     });
 
-    filteredPurchases.forEach((p) => {
-      const key = toDateKey(p.createdAt || p.date);
-      // ─── FIX: usar paid_amount en lugar de total_cost ──────────────
-      // total_cost = importe total de la factura (no necesariamente pagado hoy)
-      // paid_amount = dinero realmente desembolsado (abonos acumulados)
-      // Si paid_amount no existe (registro antiguo), caer en total_cost como fallback.
-      const paidAmt = Number(p.paid_amount);
-      const totalAmt = Number(p.total_cost) || 0;
-      const cost = !isNaN(paidAmt) ? paidAmt : totalAmt;
-      // ───────────────────────────────────────────────────────────────
-      purchasesByDay[key] = (purchasesByDay[key] || 0) + cost;
-      tPurchases += cost;
+    filteredPayments.forEach((p) => {
+      // Usamos la fecha del abono ('date' o 'createdAt' del SupplierPayment)
+      const key = toDateKey(p.date || p.createdAt);
+      const amt = Number(p.amount) || 0;
+      
+      purchasesByDay[key] = (purchasesByDay[key] || 0) + amt;
+      tPurchases += amt;
     });
 
     const allKeys = Array.from(new Set([...Object.keys(salesByDay), ...Object.keys(purchasesByDay)])).sort();
@@ -155,7 +154,7 @@ const AnalyticsManager = () => {
       totalPurchases: tPurchases,
       netProfit: tSales - tPurchases,
     };
-  }, [sales, purchases, dateFilter]);
+  }, [sales, payments, dateFilter]);
 
   /* ── Render ── */
   return (
