@@ -14,7 +14,7 @@ import ConfirmDialog from "./molecules/ConfirmDialog";
 import DataTable    from "./organisms/DataTable";
 import BarcodeScanner from "./BarcodeScanner";
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 20;
 
 const EMPTY_FORM = {
   name: "", description: "", price: "", stock: "",

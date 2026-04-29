@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus, Check, ShoppingCart, Trash2, Search, ArrowLeft,
   RefreshCw, Calendar, Camera, HelpCircle, Keyboard, X, AlertTriangle,
+  ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { useSaleStore }     from "../store/saleStore";
 import { useProductStore }  from "../store/productStore";
@@ -294,7 +295,8 @@ const SalePOSForm = ({
   paymentMethod, onPaymentChange, isLoading, currentTotal, toBs,
   filteredProducts, searchTerm, onSearch, onOpenScanner,
   cartPulse, submitBtnRef, paymentSelectRef, searchInputRef,
-  isCartOpen, setIsCartOpen
+  isCartOpen, setIsCartOpen,
+  productsPage, productsTotalPages, onProductsPageChange,
 }) => {
   return (
     <motion.div
@@ -388,7 +390,7 @@ const SalePOSForm = ({
         </div>
 
         {/* Grid de productos */}
-        <div className="flex-1 overflow-y-auto w-full max-w-6xl mx-auto pb-20">
+        <div className="flex-1 overflow-y-auto w-full max-w-6xl mx-auto pb-4">
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
             {filteredProducts.map((product) => {
               const cartItem = items.find((i) => i.product_id === product._id);
@@ -403,6 +405,38 @@ const SalePOSForm = ({
               );
             })}
           </div>
+
+          {/* Controles de paginación del catálogo — solo cuando no hay búsqueda activa */}
+          {!searchTerm && productsTotalPages > 1 && (
+            <nav
+              aria-label="Paginación de productos"
+              className="flex items-center justify-center gap-3 mt-6 mb-20"
+            >
+              <button
+                onClick={() => onProductsPageChange(productsPage - 1)}
+                disabled={productsPage === 1}
+                aria-label="Página anterior de productos"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-gray-300 hover:bg-orange-500/20 hover:border-orange-500/40 hover:text-orange-400 disabled:opacity-30 disabled:cursor-not-allowed transition-all text-sm font-medium"
+              >
+                <ChevronLeft size={16} aria-hidden="true" />
+                <span className="hidden sm:inline">Anterior</span>
+              </button>
+
+              <span className="px-4 py-2 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-400 text-sm font-bold">
+                {productsPage} <span className="text-orange-300/60 font-normal">de</span> {productsTotalPages}
+              </span>
+
+              <button
+                onClick={() => onProductsPageChange(productsPage + 1)}
+                disabled={productsPage === productsTotalPages}
+                aria-label="Página siguiente de productos"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-gray-300 hover:bg-orange-500/20 hover:border-orange-500/40 hover:text-orange-400 disabled:opacity-30 disabled:cursor-not-allowed transition-all text-sm font-medium"
+              >
+                <span className="hidden sm:inline">Siguiente</span>
+                <ChevronRight size={16} aria-hidden="true" />
+              </button>
+            </nav>
+          )}
         </div>
       </div>
 
@@ -633,7 +667,7 @@ const buildHistoryColumns = (onViewDetail, toBs) => [
 ════════════════════════════════════════════════════════════ */
 const SalesManager = () => {
   const { sales, pagination, isLoading, error, fetchSales, createSale, fetchSaleById } = useSaleStore();
-  const { products, fetchProducts, fetchProductByBarcode }                 = useProductStore();
+  const { products, pagination: productsPagination, fetchProducts, fetchProductByBarcode } = useProductStore();
   const { user }                                                           = useAuthStore();
   const { exchangeRate, setExchangeRate, toBs }                           = useCurrencyStore();
 
@@ -647,13 +681,32 @@ const SalesManager = () => {
   const [showHelp,      setShowHelp]      = useState(false);
   const [cartPulse,     setCartPulse]     = useState(false);
   const [isCartOpen,    setIsCartOpen]    = useState(false);
-  const [currentPage,   setCurrentPage]   = useState(1);
+  const [currentPage,     setCurrentPage]     = useState(1);
+  const [productsPage,    setProductsPage]    = useState(1);
 
   const searchInputRef   = useRef(null);
   const submitBtnRef     = useRef(null);
   const paymentSelectRef = useRef(null);
 
-  useEffect(() => { fetchSales(currentPage, 10); fetchProducts(); }, [fetchSales, fetchProducts, currentPage]);
+  const PRODUCTS_PER_PAGE = 20;
+
+  useEffect(() => {
+    fetchSales(currentPage, 20);
+  }, [fetchSales, currentPage]);
+
+  // Efecto unificado: paginación normal O búsqueda ampliada (debounced)
+  useEffect(() => {
+    let timer;
+    if (searchTerm.trim()) {
+      // Con búsqueda activa: esperar 350ms y traer hasta 100 productos
+      // para que el filtro local encuentre en todo el inventario
+      timer = setTimeout(() => fetchProducts(1, 100), 350);
+    } else {
+      // Sin búsqueda: paginación normal
+      fetchProducts(productsPage, PRODUCTS_PER_PAGE);
+    }
+    return () => clearTimeout(timer);
+  }, [searchTerm, productsPage, fetchProducts]);
 
   useEffect(() => {
     if (!isScannerOpen && isFormOpen) setTimeout(() => searchInputRef.current?.focus(), 100);
@@ -722,6 +775,12 @@ const SalesManager = () => {
   }, [items]);
 
   const cancelForm = () => { setIsFormOpen(false); setIsCartOpen(false); setItems([]); setPaymentMethod("Efectivo"); };
+
+  /* ── Buscador: al limpiar, volver a página 1 del catálogo ── */
+  const handleSearch = (term) => {
+    setSearchTerm(term);
+    if (!term.trim()) setProductsPage(1);
+  };
 
   /* ── Barcode scan ── */
   const handleBarcodeScan = useCallback(async (code, qty = 1) => {
@@ -824,7 +883,8 @@ const SalesManager = () => {
     return { filteredSales: list, filteredTotal: list.reduce((a, s) => a + Number(s.total_amount || 0), 0) };
   }, [sales, dateFilter]);
 
-  const totalPages = pagination?.totalPages || 1;
+  const totalPages         = pagination?.totalPages         || 1;
+  const productsTotalPages = productsPagination?.totalPages || 1;
 
   /* ── Render ── */
   return (
@@ -862,7 +922,7 @@ const SalesManager = () => {
             toBs={toBs}
             filteredProducts={filteredProducts}
             searchTerm={searchTerm}
-            onSearch={setSearchTerm}
+            onSearch={handleSearch}
             onOpenScanner={() => setIsScannerOpen(true)}
             cartPulse={cartPulse}
             submitBtnRef={submitBtnRef}
@@ -870,6 +930,9 @@ const SalesManager = () => {
             searchInputRef={searchInputRef}
             isCartOpen={isCartOpen}
             setIsCartOpen={setIsCartOpen}
+            productsPage={productsPage}
+            productsTotalPages={productsTotalPages}
+            onProductsPageChange={setProductsPage}
           />
         )}
       </AnimatePresence>
