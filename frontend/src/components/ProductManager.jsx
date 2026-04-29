@@ -163,11 +163,17 @@ const ProductManager = () => {
     
     // Limpiar variables temporales y estructurar base
     if (editingId) {
-      delete payload.stock; // no enviamos stock, sino new_stock
-      payload.new_stock = Number(formData.new_stock);
-      if (!isStockChanged) {
-        delete payload.stock_reason; // no enviar motivo si no hubo cambio
+      delete payload.stock;        // nunca enviamos el campo "stock" al actualizar
+      delete payload.new_stock;    // limpiamos primero
+      delete payload.stock_reason; // limpiamos primero
+
+      if (isStockChanged) {
+        // Solo incluir ajuste de stock si el usuario lo modificó
+        payload.new_stock    = Number(formData.new_stock);
+        payload.stock_reason = formData.stock_reason;
       }
+      // Si el stock NO cambió, no enviamos new_stock ni stock_reason
+      // → el backend solo actualizará nombre, precio, categoría, etc.
     } else {
       payload.stock_inicial = Number(formData.stock); // backend espera "stock_inicial"
       delete payload.stock;                           // no enviar campo ambiguo
