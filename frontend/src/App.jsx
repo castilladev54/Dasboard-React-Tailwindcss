@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation, Outlet } from "react-router-dom";
 import NebulaBackground from "./components/NebulaBackground";
 import LoginPage from "./pages/LoginPage";
 import EmailVerificationPage from "./pages/EmailVerificationPage";
@@ -20,6 +20,10 @@ const ProtectedRoute = ({ children }) => {
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
+
+  /*if (user && !user.isVerified) {
+    return <Navigate to="/verify-email" replace />;
+  }*/
 
   return children;
 };
@@ -69,46 +73,46 @@ function App() {
           <Route path="/" element={<HomePage />} />
 
           {/* Todas las demás rutas se renderizan dentro de un contenedor centrado */}
-          <Route path="*" element={
+          <Route element={
             <div className="min-h-screen w-full flex items-center justify-center p-4">
-              <Routes>
-                <Route
-                  path="/dashboard"
-                  element={
-                    <ProtectedRoute>
-                      <DashboardPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/login"
-                  element={
-                    <RedirectAuthenticatedUser>
-                      <LoginPage />
-                    </RedirectAuthenticatedUser>
-                  }
-                />
-                <Route path="/verify-email" element={<EmailVerificationPage />} />
-                <Route
-                  path="/forgot-password"
-                  element={
-                    <RedirectAuthenticatedUser>
-                      <ForgotPasswordPage />
-                    </RedirectAuthenticatedUser>
-                  }
-                />
-                <Route
-                  path="/reset-password/:token"
-                  element={
-                    <RedirectAuthenticatedUser>
-                      <ResetPasswordPage />
-                    </RedirectAuthenticatedUser>
-                  }
-                />
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
+              <Outlet />
             </div>
-          } />
+          }>
+            <Route
+              path="/dashboard/*"
+              element={
+                <ProtectedRoute>
+                  <DashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/login"
+              element={
+                <RedirectAuthenticatedUser>
+                  <LoginPage />
+                </RedirectAuthenticatedUser>
+              }
+            />
+            <Route path="/verify-email" element={<EmailVerificationPage />} />
+            <Route
+              path="/forgot-password"
+              element={
+                <RedirectAuthenticatedUser>
+                  <ForgotPasswordPage />
+                </RedirectAuthenticatedUser>
+              }
+            />
+            <Route
+              path="/reset-password/:token"
+              element={
+                <RedirectAuthenticatedUser>
+                  <ResetPasswordPage />
+                </RedirectAuthenticatedUser>
+              }
+            />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Route>
         </Routes>
       </div>
       {!location.pathname.startsWith("/dashboard") && <Footer />}

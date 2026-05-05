@@ -105,8 +105,8 @@ const AnalyticsManager = () => {
   const [dateFilter, setDateFilter] = useState('all');
 
   useEffect(() => { 
-    fetchSales(); 
-    fetchPurchases(); 
+    fetchSales(1, 10000); 
+    fetchPurchases(1, 10000); 
     fetchPayments(); 
   }, [fetchSales, fetchPurchases, fetchPayments]);
 

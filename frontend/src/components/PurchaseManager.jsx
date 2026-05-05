@@ -378,7 +378,8 @@ const PurchaseManager = () => {
   const [dueDate,  setDueDate]  = useState("");
   const [items,    setItems]    = useState(EMPTY_ITEMS_LIST);
 
-  useEffect(() => { fetchPurchases(currentPage, 10); fetchProducts(); }, [fetchPurchases, fetchProducts, currentPage]);
+  useEffect(() => { fetchPurchases(currentPage, 10); }, [fetchPurchases, currentPage]);
+  useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
   const totalPages = pagination?.totalPages || 1;
 
@@ -433,7 +434,7 @@ const PurchaseManager = () => {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isFormOpen]);
+  }, [isFormOpen, handleBarcodeScan]);
 
   /* ── Handlers ── */
   const handleItemChange = (index, field, value) => {
@@ -448,22 +449,25 @@ const PurchaseManager = () => {
     });
   };
 
-  const handleBarcodeScan = async (code) => {
+  const handleBarcodeScan = useCallback(async (code) => {
     try {
       const { product } = await fetchProductByBarcode(code);
       if (product) {
-        const emptyIdx = items.findIndex((i) => !i.product_id);
-        if (emptyIdx !== -1) {
-          handleItemChange(emptyIdx, "product_id", product._id);
-        } else {
-          setItems((prev) => [...prev, { product_id: product._id, quantity: 1, unit_cost: product.price, unit_type: product.unit_type || "unidad" }]);
-        }
+        setItems((prev) => {
+          const emptyIdx = prev.findIndex((i) => !i.product_id);
+          if (emptyIdx !== -1) {
+            const next = [...prev];
+            next[emptyIdx] = { ...next[emptyIdx], product_id: product._id, unit_type: product.unit_type || "unidad" };
+            return next;
+          }
+          return [...prev, { product_id: product._id, quantity: 1, unit_cost: product.price, unit_type: product.unit_type || "unidad" }];
+        });
         toast.success(`Añadido: ${product.name}`);
       }
     } catch {
       toast.error(`Código "${code}" no encontrado`);
     }
-  };
+  }, [fetchProductByBarcode]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -487,8 +491,8 @@ const PurchaseManager = () => {
       });
       toast.success("Compra/Entrada registrada con éxito");
       closeForm();
-    } catch {
-      toast.error(error || "Ocurrió un error al registrar la compra");
+    } catch (err) {
+      toast.error(err?.response?.data?.message || error || "Ocurrió un error al registrar la compra");
     }
   };
 

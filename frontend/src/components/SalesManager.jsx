@@ -716,8 +716,8 @@ const SalesManager = () => {
   }, [fetchStaff]);
 
   useEffect(() => {
-    fetchSales(currentPage, 20, sellerFilter);
-  }, [fetchSales, currentPage, sellerFilter]);
+    fetchSales(currentPage, 20, sellerFilter, dateFilter);
+  }, [fetchSales, currentPage, sellerFilter, dateFilter]);
 
   // Efecto unificado: paginación normal O búsqueda ampliada (debounced)
   useEffect(() => {
@@ -747,9 +747,9 @@ const SalesManager = () => {
           setTimeout(() => toast.error(`Sin más stock de ${product.name}`), 0);
           return prev;
         }
-        const next = [...prev];
-        next[idx].quantity += quantity;
-        return next;
+        return prev.map((item, i) =>
+          i === idx ? { ...item, quantity: item.quantity + quantity } : item
+        );
       }
       return [...prev, { product_id: product._id, name: product.name, quantity, unit_price: product.price, maxStock: product.stock, unit_type: product.unit_type || "unidad" }];
     });
@@ -851,7 +851,7 @@ const SalesManager = () => {
       toast.success("Venta registrada con éxito");
       cancelForm();
       fetchProducts();
-    } catch { toast.error(error || "Error al registrar la venta"); }
+    } catch (err) { toast.error(err?.response?.data?.message || error || "Error al registrar la venta"); }
   };
 
   const handleViewDetail = async (id) => {
@@ -904,9 +904,8 @@ const SalesManager = () => {
   const currentTotal     = items.reduce((a, i) => a + itemSubtotal(i), 0);
   const filteredProducts = products.filter((p) => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
   const { filteredSales, filteredTotal } = useMemo(() => {
-    const list = filterSalesByDate(sales, dateFilter);
-    return { filteredSales: list, filteredTotal: list.reduce((a, s) => a + Number(s.total_amount || 0), 0) };
-  }, [sales, dateFilter]);
+    return { filteredSales: sales, filteredTotal: sales.reduce((a, s) => a + Number(s.total_amount || 0), 0) };
+  }, [sales]);
 
   const totalPages         = pagination?.totalPages         || 1;
   const productsTotalPages = productsPagination?.totalPages || 1;
@@ -993,7 +992,7 @@ const SalesManager = () => {
                 ))}
               </nav>
 
-              {user?.role === "customer" && (
+              {(user?.role === "customer" || user?.role === "admin") && (
                 <div className="flex items-center gap-2">
                   <select
                     value={sellerFilter || ""}

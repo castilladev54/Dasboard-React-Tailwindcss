@@ -20,6 +20,7 @@ const StaffManager = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({ name: "", email: "", password: "", permissions: [] });
   const [editingId, setEditingId] = useState(null);
+  const [pendingPermissions, setPendingPermissions] = useState(null);
 
   useEffect(() => {
     fetchStaff();
@@ -50,6 +51,7 @@ const StaffManager = () => {
       await updateEmployeePermissions(id, newPermissions);
       toast.success("Permisos actualizados");
       setEditingId(null);
+      setPendingPermissions(null);
     } catch (error) {
       toast.error("Error al actualizar permisos");
     }
@@ -131,18 +133,35 @@ const StaffManager = () => {
                   <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1">
                     <Key size={12} /> Permisos
                   </h4>
-                  <button 
-                    onClick={() => setEditingId(editingId === emp._id ? null : emp._id)}
-                    className="text-xs text-purple-400 hover:text-purple-300 transition-colors font-medium"
-                  >
-                    {editingId === emp._id ? 'Cancelar Edición' : 'Editar'}
-                  </button>
+                  {editingId === emp._id ? (
+                    <div className="flex gap-3">
+                      <button 
+                        onClick={() => handleUpdatePermissions(emp._id, pendingPermissions)}
+                        className="text-xs text-green-400 hover:text-green-300 transition-colors font-bold"
+                      >
+                        Guardar
+                      </button>
+                      <button 
+                        onClick={() => { setEditingId(null); setPendingPermissions(null); }}
+                        className="text-xs text-gray-400 hover:text-gray-300 transition-colors font-medium"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  ) : (
+                    <button 
+                      onClick={() => { setEditingId(emp._id); setPendingPermissions(emp.permissions); }}
+                      className="text-xs text-purple-400 hover:text-purple-300 transition-colors font-medium"
+                    >
+                      Editar
+                    </button>
+                  )}
                 </div>
 
                 <div className="space-y-2">
                   {AVAILABLE_PERMISSIONS.map(perm => {
-                    const hasPerm = emp.permissions.includes(perm.id);
                     const isEditing = editingId === emp._id;
+                    const hasPerm = isEditing && pendingPermissions ? pendingPermissions.includes(perm.id) : emp.permissions.includes(perm.id);
                     
                     if (!hasPerm && !isEditing) return null; // Ocultar si no lo tiene y no estamos editando
 
@@ -151,10 +170,11 @@ const StaffManager = () => {
                         key={perm.id} 
                         onClick={() => {
                           if (!isEditing) return;
-                          const newPerms = hasPerm 
-                            ? emp.permissions.filter(p => p !== perm.id)
-                            : [...emp.permissions, perm.id];
-                          handleUpdatePermissions(emp._id, newPerms);
+                          if (pendingPermissions.includes(perm.id)) {
+                            setPendingPermissions(pendingPermissions.filter(p => p !== perm.id));
+                          } else {
+                            setPendingPermissions([...pendingPermissions, perm.id]);
+                          }
                         }}
                         className={`flex items-center gap-2 p-2 rounded-lg text-sm transition-all ${
                           isEditing ? 'cursor-pointer hover:bg-gray-800' : ''

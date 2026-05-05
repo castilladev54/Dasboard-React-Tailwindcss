@@ -35,6 +35,8 @@ axios.interceptors.response.use(
       if (error.response.data) {
         error.response.data.message = 'Tiempo de espera agotado. Intenta de nuevo.';
       }
+    } else if (error.response && error.response.status === 403 && error.response.data?.message?.includes("Suscripción expirada")) {
+      useAuthStore.getState().setSubscriptionExpired(true);
     }
     return Promise.reject(error);
   }

@@ -19,13 +19,22 @@ const BarcodeScanner = ({ onScan, onClose, isOpen, continuous = false }) => {
     multiplierRef.current = multiplier;
   }, [multiplier]);
 
-  // Play beep sound on scan
   const playBeep = useCallback(() => {
     if (!soundEnabled) return;
     try {
-      const beep = new Audio("/beep.mp3"); // Ensure this file exists in public folder or use a remote one
-      beep.play().catch(() => { }); // Catch browser blocking autoplay
-    } catch (e) { }
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      oscillator.type = 'sine';
+      oscillator.frequency.value = 800;
+      gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      oscillator.start();
+      oscillator.stop(audioCtx.currentTime + 0.1);
+    } catch (e) {
+      console.error(e);
+    }
   }, [soundEnabled]);
 
   const startScanner = useCallback(async (facingMode) => {
@@ -101,11 +110,15 @@ const BarcodeScanner = ({ onScan, onClose, isOpen, continuous = false }) => {
   }, [continuous, onScan, onClose, playBeep]);
 
   useEffect(() => {
+    let isMounted = true;
     if (isOpen) {
       // Delay for modal container to mount into DOM
-      const timer = setTimeout(() => startScanner(cameraFacingMode), 150);
+      const timer = setTimeout(() => {
+        if (isMounted) startScanner(cameraFacingMode);
+      }, 150);
 
       return () => {
+        isMounted = false;
         clearTimeout(timer);
         if (scannerRef.current) {
           if (scannerRef.current.isScanning) {

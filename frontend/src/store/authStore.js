@@ -70,7 +70,7 @@ export const useAuthStore = create((set) => ({
 		} catch (error) {
 			set({
 				isLoading: false,
-				error: error.response.data.message || "Error sending reset password email",
+				error: error.response?.data?.message || "Error sending reset password email",
 			});
 			throw error;
 		}
@@ -83,7 +83,7 @@ export const useAuthStore = create((set) => ({
 		} catch (error) {
 			set({
 				isLoading: false,
-				error: error.response.data.message || "Error resetting password",
+				error: error.response?.data?.message || "Error resetting password",
 			});
 			throw error;
 		}
@@ -119,13 +119,4 @@ export const useAuthStore = create((set) => ({
 		}
 	},
 }));
-
-axios.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 403 && error.response?.data?.message?.includes("Suscripción expirada")) {
-       useAuthStore.getState().setSubscriptionExpired(true);
-    }
-    return Promise.reject(error);
-  }
-);
+

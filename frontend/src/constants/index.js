@@ -34,7 +34,7 @@ export const authContent = {
         link: "Regístrate aquí",
     },
     signup: {
-        title: "Únete a Asistavet",
+        title: "Únete a CastillaWeb",
         subtitle: "Crea tu perfil para beneficios exclusivos",
         button: "Crear Cuenta",
         footer: "¿Ya eres miembro?",
@@ -60,7 +60,7 @@ export const authContent = {
         loading: "Verificando..."
     },
     dashboard: {
-        title: "Mi Cuenta Asistavet",
+        title: "Mi Cuenta CastillaWeb",
         profileInfo: "Información Estelar",
         nameLabel: "Nombre: ",
         emailLabel: "Email: ",
