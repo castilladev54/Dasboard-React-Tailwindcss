@@ -919,7 +919,10 @@ const SalesManager = () => {
       <header className="flex flex-col gap-4 mb-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <h2 id="sales-heading" className="text-2xl sm:text-3xl font-bold text-white tracking-wide">
-            Punto de <span className="text-orange-500">Venta</span>
+            {user?.role === "employee"
+              ? <>Mis <span className="text-orange-500">Ventas</span></>
+              : <>Punto de <span className="text-orange-500">Venta</span></>
+            }
           </h2>
           {!isFormOpen && !viewedSale && (
             <Button variant="primary" onClick={() => setIsFormOpen(true)} className="w-full sm:w-auto">
