@@ -11,10 +11,13 @@ export const useSaleStore = create((set) => ({
   isLoading: false,
   error: null,
 
-  fetchSales: async (page = 1, limit = 20) => {
+  fetchSales: async (page = 1, limit = 20, seller = null) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.get(`${API_URL}?page=${page}&limit=${limit}`);
+      const params = new URLSearchParams({ page, limit });
+      if (seller) params.append('seller', seller);
+      
+      const response = await axios.get(`${API_URL}?${params.toString()}`);
       const payload = response.data;
 
       // El backend devuelve los campos de paginación en el nivel raíz:

@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { useSaleStore }     from "../store/saleStore";
 import { useProductStore }  from "../store/productStore";
+import { useStaffStore }    from "../store/staffStore";
 import { useAuthStore }     from "../store/authStore";
 import { useCurrencyStore } from "../store/currencyStore";
 import toast from "react-hot-toast";
@@ -480,6 +481,7 @@ const SaleDetailView = ({ sale, onBack, toBs }) => (
       {[
         { label: "Método de Pago", value: sale.payment_method,                              cls: "" },
         { label: "Fecha",          value: new Date(sale.createdAt).toLocaleString(),        cls: "" },
+        { label: "Atendido por",   value: sale.sold_by?.name || "Propietario",              cls: "" },
         { label: "Total USD",      value: fmtUSD(sale.total_amount),                       cls: "text-amber-500 text-2xl font-bold bg-amber-500/10 border-amber-500/20" },
         { label: "Total Bs",       value: fmtBs(sale.total_amount, toBs),                  cls: "text-blue-400 text-2xl font-bold bg-blue-500/10 border-blue-500/20" },
       ].map(({ label, value, cls }) => (
@@ -640,6 +642,23 @@ const buildHistoryColumns = (onViewDetail, toBs) => [
     render: (val) => <Badge variant="success">{val || "Completada"}</Badge>,
   },
   {
+    key: "sold_by",
+    label: "Vendedor",
+    headerClassName: "hidden lg:table-cell",
+    className: "hidden lg:table-cell",
+    render: (val) => {
+      const name = val?.name || "Propietario";
+      return (
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-400 text-[10px] font-bold border border-orange-500/30">
+            {name.charAt(0).toUpperCase()}
+          </div>
+          <span className="text-gray-300 text-sm font-medium">{name}</span>
+        </div>
+      );
+    }
+  },
+  {
     key: "total_amount",
     label: "Total",
     render: (val) => (
@@ -668,6 +687,7 @@ const buildHistoryColumns = (onViewDetail, toBs) => [
 const SalesManager = () => {
   const { sales, pagination, isLoading, error, fetchSales, createSale, fetchSaleById } = useSaleStore();
   const { products, pagination: productsPagination, fetchProducts, fetchProductByBarcode } = useProductStore();
+  const { staff, fetchStaff }                                              = useStaffStore();
   const { user }                                                           = useAuthStore();
   const { exchangeRate, setExchangeRate, toBs }                           = useCurrencyStore();
 
@@ -683,6 +703,7 @@ const SalesManager = () => {
   const [isCartOpen,    setIsCartOpen]    = useState(false);
   const [currentPage,     setCurrentPage]     = useState(1);
   const [productsPage,    setProductsPage]    = useState(1);
+  const [sellerFilter,    setSellerFilter]    = useState(null);
 
   const searchInputRef   = useRef(null);
   const submitBtnRef     = useRef(null);
@@ -691,8 +712,12 @@ const SalesManager = () => {
   const PRODUCTS_PER_PAGE = 20;
 
   useEffect(() => {
-    fetchSales(currentPage, 20);
-  }, [fetchSales, currentPage]);
+    fetchStaff();
+  }, [fetchStaff]);
+
+  useEffect(() => {
+    fetchSales(currentPage, 20, sellerFilter);
+  }, [fetchSales, currentPage, sellerFilter]);
 
   // Efecto unificado: paginación normal O búsqueda ampliada (debounced)
   useEffect(() => {
@@ -952,17 +977,41 @@ const SalesManager = () => {
         <>
           {/* Filtros de fecha */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-            <nav className="flex items-center gap-2 flex-wrap" aria-label="Filtro por período">
-              <Calendar size={18} className="text-gray-400 shrink-0" aria-hidden="true" />
-              {DATE_FILTER_OPTIONS.map((opt) => (
-                <Button key={opt.value} size="sm"
-                  variant={dateFilter === opt.value ? "primary" : "secondary"}
-                  onClick={() => setDateFilter(opt.value)}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-wrap">
+              <nav className="flex items-center gap-2 flex-wrap" aria-label="Filtro por período">
+                <Calendar size={18} className="text-gray-400 shrink-0" aria-hidden="true" />
+                {DATE_FILTER_OPTIONS.map((opt) => (
+                  <Button key={opt.value} size="sm"
+                    variant={dateFilter === opt.value ? "primary" : "secondary"}
+                    onClick={() => setDateFilter(opt.value)}
+                  >
+                    {opt.label}
+                  </Button>
+                ))}
+              </nav>
+
+              <div className="flex items-center gap-2">
+                <select
+                  value={sellerFilter || ""}
+                  onChange={(e) => {
+                    setSellerFilter(e.target.value || null);
+                    setCurrentPage(1);
+                  }}
+                  className="bg-[#1a1a24] border border-white/10 rounded-xl px-3 py-1.5 text-sm text-gray-300 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition outline-none cursor-pointer"
                 >
-                  {opt.label}
-                </Button>
-              ))}
-            </nav>
+                  <option value="">Todos los vendedores</option>
+                  {staff.map((emp) => (
+                    <option key={emp._id} value={emp._id}>{emp.name}</option>
+                  ))}
+                </select>
+                {sellerFilter && (
+                  <div className="flex items-center gap-1.5 bg-orange-500/10 border border-orange-500/20 text-orange-400 px-3 py-1.5 rounded-xl text-xs font-medium">
+                    <span>Filtrando: {staff.find(e => e._id === sellerFilter)?.name || 'Vendedor'}</span>
+                    <button onClick={() => { setSellerFilter(null); setCurrentPage(1); }} className="hover:text-white transition"><X size={14} /></button>
+                  </div>
+                )}
+              </div>
+            </div>
             {dateFilter !== "all" && (
               <div className="flex items-center gap-4 bg-gradient-to-r from-amber-500/10 to-blue-500/10 border border-amber-500/20 rounded-xl px-4 py-2">
                 <div className="text-right">
