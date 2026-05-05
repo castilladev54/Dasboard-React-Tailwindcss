@@ -990,27 +990,29 @@ const SalesManager = () => {
                 ))}
               </nav>
 
-              <div className="flex items-center gap-2">
-                <select
-                  value={sellerFilter || ""}
-                  onChange={(e) => {
-                    setSellerFilter(e.target.value || null);
-                    setCurrentPage(1);
-                  }}
-                  className="bg-[#1a1a24] border border-white/10 rounded-xl px-3 py-1.5 text-sm text-gray-300 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition outline-none cursor-pointer"
-                >
-                  <option value="">Todos los vendedores</option>
-                  {staff.map((emp) => (
-                    <option key={emp._id} value={emp._id}>{emp.name}</option>
-                  ))}
-                </select>
-                {sellerFilter && (
-                  <div className="flex items-center gap-1.5 bg-orange-500/10 border border-orange-500/20 text-orange-400 px-3 py-1.5 rounded-xl text-xs font-medium">
-                    <span>Filtrando: {staff.find(e => e._id === sellerFilter)?.name || 'Vendedor'}</span>
-                    <button onClick={() => { setSellerFilter(null); setCurrentPage(1); }} className="hover:text-white transition"><X size={14} /></button>
-                  </div>
-                )}
-              </div>
+              {user?.role === "customer" && (
+                <div className="flex items-center gap-2">
+                  <select
+                    value={sellerFilter || ""}
+                    onChange={(e) => {
+                      setSellerFilter(e.target.value || null);
+                      setCurrentPage(1);
+                    }}
+                    className="bg-[#1a1a24] border border-white/10 rounded-xl px-3 py-1.5 text-sm text-gray-300 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition outline-none cursor-pointer"
+                  >
+                    <option value="">Todos los vendedores</option>
+                    {staff.map((emp) => (
+                      <option key={emp._id} value={emp._id}>{emp.name}</option>
+                    ))}
+                  </select>
+                  {sellerFilter && (
+                    <div className="flex items-center gap-1.5 bg-orange-500/10 border border-orange-500/20 text-orange-400 px-3 py-1.5 rounded-xl text-xs font-medium">
+                      <span>Filtrando: {staff.find(e => e._id === sellerFilter)?.name || 'Vendedor'}</span>
+                      <button onClick={() => { setSellerFilter(null); setCurrentPage(1); }} className="hover:text-white transition"><X size={14} /></button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             {dateFilter !== "all" && (
               <div className="flex items-center gap-4 bg-gradient-to-r from-amber-500/10 to-blue-500/10 border border-amber-500/20 rounded-xl px-4 py-2">
