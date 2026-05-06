@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Plus, 
@@ -415,27 +415,6 @@ const PurchaseManager = () => {
     return result;
   }, [purchases, activeTab, searchQuery]);
 
-  /* ── Escáner físico de código de barras ── */
-  useEffect(() => {
-    let buffer = "";
-    let lastKeyTime = Date.now();
-    const handleKeyDown = (e) => {
-      if (!isFormOpen) return;
-      const tag = e.target.tagName.toLowerCase();
-      if (["input", "textarea", "select"].includes(tag)) return;
-      const now = Date.now();
-      if (now - lastKeyTime > 50) buffer = "";
-      if (e.key === "Enter") {
-        if (buffer.length >= 5) { handleBarcodeScan(buffer); buffer = ""; e.preventDefault(); }
-      } else if (e.key.length === 1) {
-        buffer += e.key;
-      }
-      lastKeyTime = now;
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isFormOpen, handleBarcodeScan]);
-
   /* ── Handlers ── */
   const handleItemChange = (index, field, value) => {
     setItems((prev) => {
@@ -468,6 +447,27 @@ const PurchaseManager = () => {
       toast.error(`Código "${code}" no encontrado`);
     }
   }, [fetchProductByBarcode]);
+
+  /* ── Escáner físico de código de barras ── */
+  useEffect(() => {
+    let buffer = "";
+    let lastKeyTime = Date.now();
+    const handleKeyDown = (e) => {
+      if (!isFormOpen) return;
+      const tag = e.target.tagName.toLowerCase();
+      if (["input", "textarea", "select"].includes(tag)) return;
+      const now = Date.now();
+      if (now - lastKeyTime > 50) buffer = "";
+      if (e.key === "Enter") {
+        if (buffer.length >= 5) { handleBarcodeScan(buffer); buffer = ""; e.preventDefault(); }
+      } else if (e.key.length === 1) {
+        buffer += e.key;
+      }
+      lastKeyTime = now;
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isFormOpen, handleBarcodeScan]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
