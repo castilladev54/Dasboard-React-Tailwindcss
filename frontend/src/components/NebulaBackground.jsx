@@ -27,7 +27,7 @@ const NebulaBackground = () => {
             />
 
             {/* Capa de Textura (Ruido) Cinematográfico - 3% Opacidad */}
-            <div className="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-overlay bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
+            <div className="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-overlay" />
 
             {/* Overlay sutil para mejorar el contraste del contenido */}
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#050300]/80 pointer-events-none" />
