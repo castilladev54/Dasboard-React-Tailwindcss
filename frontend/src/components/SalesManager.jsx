@@ -22,12 +22,12 @@ import BarcodeScanner from "./BarcodeScanner";
 const PAYMENT_METHODS = ["Efectivo", "Efectivo Bs", "Tarjeta", "Transferencia", "Pago Movil"];
 
 const DATE_FILTER_OPTIONS = [
-  { value: "all",    label: "Todas"    },
-  { value: "today",  label: "Hoy"      },
-  { value: "ayer",   label: "Ayer"     },
-  { value: "7days",  label: "7 días"   },
-  { value: "30days", label: "30 días"  },
-  { value: "month",  label: "Este mes" },
+  { value: "all", label: "Todas" },
+  { value: "today", label: "Hoy" },
+  { value: "ayer", label: "Ayer" },
+  { value: "7days", label: "7 días" },
+  { value: "30days", label: "30 días" },
+  { value: "month", label: "Este mes" },
 ];
 
 /* ─── Helpers ────────────────────────────────────────────── */
@@ -986,7 +986,7 @@ const SalesManager = () => {
             setIsCartOpen={setIsCartOpen}
             productsPage={1}
             productsTotalPages={1}
-            onProductsPageChange={() => {}}
+            onProductsPageChange={() => { }}
           />
         )}
       </AnimatePresence>
