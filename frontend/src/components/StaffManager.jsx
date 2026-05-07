@@ -1,52 +1,33 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Users, Shield, Plus, X, Check, Trash2, Key, Loader, Calendar, ChevronDown, ShoppingCart, DollarSign } from "lucide-react";
+import { Users, Shield, Plus, X, Check, Trash2, Key, Loader, ShoppingCart, DollarSign } from "lucide-react";
 import { useStaffStore } from "../store/staffStore";
 import { useAuthStore } from "../store/authStore";
-import { DATE_FILTER_OPTIONS } from "../hooks/useSalesFilters";
 import toast from "react-hot-toast";
 
-
 const AVAILABLE_PERMISSIONS = [
-  { id: "pos_access", label: "Punto de Venta", desc: "Permite registrar ventas" },
-  { id: "inventory_access", label: "Inventario", desc: "Crear y editar productos" },
-  { id: "purchases_access", label: "Compras", desc: "Registrar gastos y abonos" },
-  { id: "finances_access", label: "Finanzas & IA", desc: "Ver rentabilidad y asistente" },
-  { id: "staff_management", label: "Gestionar Empleados", desc: "Crear o eliminar cajeros" }
+  { id: "pos_access",       label: "Punto de Venta",       desc: "Permite registrar ventas" },
+  { id: "inventory_access", label: "Inventario",           desc: "Crear y editar productos" },
+  { id: "purchases_access", label: "Compras",              desc: "Registrar gastos y abonos" },
+  { id: "finances_access",  label: "Finanzas & IA",        desc: "Ver rentabilidad y asistente" },
+  { id: "staff_management", label: "Gestionar Empleados",  desc: "Crear o eliminar cajeros" },
 ];
 
 const StaffManager = () => {
   const { staff, isLoading, fetchStaff, createEmployee, updateEmployeePermissions, deleteEmployee } = useStaffStore();
   const { user } = useAuthStore();
 
-  const [isModalOpen,      setIsModalOpen]      = useState(false);
-  const [formData,         setFormData]         = useState({ name: "", email: "", password: "", permissions: [] });
-  const [editingId,        setEditingId]        = useState(null);
+  const [isModalOpen,        setIsModalOpen]        = useState(false);
+  const [formData,           setFormData]           = useState({ name: "", email: "", password: "", permissions: [] });
+  const [editingId,          setEditingId]          = useState(null);
   const [pendingPermissions, setPendingPermissions] = useState(null);
-  const [dateFilter,       setDateFilter]       = useState("all");
-  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
-  const datePickerRef = useRef(null);
+  useEffect(() => { fetchStaff(); }, [fetchStaff]);
 
-  useEffect(() => {
-    fetchStaff(dateFilter);
-  }, [fetchStaff, dateFilter]);
-
-  // Cerrar el picker al hacer clic fuera
-  useEffect(() => {
-    const handleOutside = (e) => {
-      if (datePickerRef.current && !datePickerRef.current.contains(e.target))
-        setIsDatePickerOpen(false);
-    };
-    document.addEventListener("mousedown", handleOutside);
-    return () => document.removeEventListener("mousedown", handleOutside);
-  }, []);
-
-  const activeDateLabel = DATE_FILTER_OPTIONS.find((o) => o.value === dateFilter)?.label || "Todos";
-
+  /* ── Handlers ── */
   const handleTogglePermission = (permId, currentPerms, setPermsFunc) => {
     if (currentPerms.includes(permId)) {
-      setPermsFunc(currentPerms.filter(p => p !== permId));
+      setPermsFunc(currentPerms.filter((p) => p !== permId));
     } else {
       setPermsFunc([...currentPerms, permId]);
     }
@@ -86,6 +67,7 @@ const StaffManager = () => {
     }
   };
 
+  /* ── Acceso denegado ── */
   if (user?.role === "employee" && !user.permissions?.includes("staff_management")) {
     return (
       <div className="flex flex-col items-center justify-center h-96 text-gray-400">
@@ -96,20 +78,29 @@ const StaffManager = () => {
     );
   }
 
+  /* ── Render ── */
   return (
     <div className="space-y-6">
-      {/* Header Premium */}
-      <motion.div 
+
+      {/* Header */}
+      <motion.header
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         className="bg-gray-800/50 backdrop-blur-xl border border-gray-700 p-6 rounded-2xl shadow-xl flex justify-between items-center"
       >
         <div>
           <h2 className="text-2xl font-bold text-white flex items-center gap-3">
-            <Users className="text-purple-400" />
+            <Users className="text-purple-400" aria-hidden="true" />
             Gestión de Personal
           </h2>
-          <p className="text-gray-400 mt-1 text-sm">Controla quién puede acceder a tu sistema y qué puede ver.</p>
+          <p className="text-gray-400 mt-1 text-sm">
+            Controla quién puede acceder a tu sistema y qué puede ver.
+            {staff.length > 0 && (
+              <span className="ml-2 text-xs bg-gray-700/60 border border-gray-600 px-2 py-0.5 rounded-lg">
+                {staff.length} empleado{staff.length !== 1 ? "s" : ""}
+              </span>
+            )}
+          </p>
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
@@ -118,93 +109,42 @@ const StaffManager = () => {
           <Plus size={20} />
           Nuevo Empleado
         </button>
-      </motion.div>
-
-      {/* Filtro de fecha */}
-      <nav aria-label="Filtrar empleados por fecha" className="flex items-center gap-3 flex-wrap">
-        <div className="relative" ref={datePickerRef}>
-          <button
-            type="button"
-            onClick={() => setIsDatePickerOpen((p) => !p)}
-            aria-expanded={isDatePickerOpen}
-            aria-haspopup="true"
-            aria-label={`Filtrar por fecha: ${activeDateLabel}`}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-800/60 border border-gray-700 text-gray-200 text-sm font-medium hover:border-purple-500/50 transition-all"
-          >
-            <Calendar size={16} className="text-purple-400" aria-hidden="true" />
-            <span>{activeDateLabel}</span>
-            <ChevronDown
-              size={14}
-              aria-hidden="true"
-              className={`text-gray-400 transition-transform duration-200 ${isDatePickerOpen ? "rotate-180" : ""}`}
-            />
-          </button>
-
-          <AnimatePresence>
-            {isDatePickerOpen && (
-              <motion.div
-                initial={{ opacity: 0, y: -8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.15 }}
-                className="absolute left-0 top-full mt-2 z-30 bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl p-2 min-w-[160px]"
-                role="menu"
-              >
-                {DATE_FILTER_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    role="menuitem"
-                    onClick={() => { setDateFilter(opt.value); setIsDatePickerOpen(false); }}
-                    className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                      dateFilter === opt.value
-                        ? "bg-purple-500/20 text-purple-300 border border-purple-500/30"
-                        : "text-gray-300 hover:bg-gray-800"
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* Badge de cantidad */}
-        {staff.length > 0 && (
-          <span className="text-xs text-gray-400 bg-gray-800/60 border border-gray-700 px-3 py-1.5 rounded-xl">
-            {staff.length} empleado{staff.length !== 1 ? "s" : ""}
-          </span>
-        )}
-      </nav>
+      </motion.header>
 
       {/* Lista de Empleados */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {isLoading && staff.length === 0 ? (
-          <div className="col-span-full flex justify-center py-12"><Loader className="animate-spin text-purple-500" size={40} /></div>
+          <div className="col-span-full flex justify-center py-12">
+            <Loader className="animate-spin text-purple-500" size={40} />
+          </div>
         ) : staff.length === 0 ? (
           <div className="col-span-full text-center py-12 text-gray-500 bg-gray-800/30 rounded-2xl border border-gray-800 border-dashed">
             No tienes empleados registrados.
           </div>
         ) : (
           staff.map((emp) => (
-            <motion.div
+            <motion.article
               key={emp._id}
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               className="bg-gray-800/80 backdrop-blur-md border border-gray-700/50 rounded-2xl overflow-hidden hover:border-purple-500/30 transition-all shadow-lg"
             >
+              {/* Nombre + eliminar */}
               <div className="p-5 border-b border-gray-700/50 flex justify-between items-start">
                 <div>
                   <h3 className="text-lg font-bold text-white">{emp.name}</h3>
                   <p className="text-sm text-gray-400">{emp.email}</p>
                 </div>
-                <button onClick={() => handleDelete(emp._id)} className="text-gray-500 hover:text-red-400 transition-colors p-1 bg-gray-800 rounded-lg">
+                <button
+                  onClick={() => handleDelete(emp._id)}
+                  aria-label={`Eliminar empleado ${emp.name}`}
+                  className="text-gray-500 hover:text-red-400 transition-colors p-1 bg-gray-800 rounded-lg"
+                >
                   <Trash2 size={18} />
                 </button>
               </div>
 
-              {/* salesStats del período */}
+              {/* salesStats */}
               <div className="px-5 py-3 bg-black/20 border-b border-gray-700/50 flex items-center gap-4 text-xs">
                 <span className="flex items-center gap-1.5 text-purple-300">
                   <ShoppingCart size={13} aria-hidden="true" />
@@ -214,24 +154,25 @@ const StaffManager = () => {
                 <span className="flex items-center gap-1.5 text-green-300">
                   <DollarSign size={13} aria-hidden="true" />
                   <strong>${(emp.salesStats?.totalAmount ?? 0).toFixed(2)}</strong>
-                  <span className="text-gray-500">en el período</span>
+                  <span className="text-gray-500">total</span>
                 </span>
               </div>
 
+              {/* Permisos */}
               <div className="p-5 bg-gray-900/30">
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1">
-                    <Key size={12} /> Permisos
+                    <Key size={12} aria-hidden="true" /> Permisos
                   </h4>
                   {editingId === emp._id ? (
                     <div className="flex gap-3">
-                      <button 
+                      <button
                         onClick={() => handleUpdatePermissions(emp._id, pendingPermissions)}
                         className="text-xs text-green-400 hover:text-green-300 transition-colors font-bold"
                       >
                         Guardar
                       </button>
-                      <button 
+                      <button
                         onClick={() => { setEditingId(null); setPendingPermissions(null); }}
                         className="text-xs text-gray-400 hover:text-gray-300 transition-colors font-medium"
                       >
@@ -239,7 +180,7 @@ const StaffManager = () => {
                       </button>
                     </div>
                   ) : (
-                    <button 
+                    <button
                       onClick={() => { setEditingId(emp._id); setPendingPermissions(emp.permissions); }}
                       className="text-xs text-purple-400 hover:text-purple-300 transition-colors font-medium"
                     >
@@ -249,30 +190,31 @@ const StaffManager = () => {
                 </div>
 
                 <div className="space-y-2">
-                  {AVAILABLE_PERMISSIONS.map(perm => {
+                  {AVAILABLE_PERMISSIONS.map((perm) => {
                     const isEditing = editingId === emp._id;
-                    const hasPerm = isEditing && pendingPermissions ? pendingPermissions.includes(perm.id) : emp.permissions.includes(perm.id);
-                    
-                    if (!hasPerm && !isEditing) return null; // Ocultar si no lo tiene y no estamos editando
+                    const hasPerm = isEditing && pendingPermissions
+                      ? pendingPermissions.includes(perm.id)
+                      : emp.permissions.includes(perm.id);
+
+                    if (!hasPerm && !isEditing) return null;
 
                     return (
-                      <div 
-                        key={perm.id} 
+                      <div
+                        key={perm.id}
                         onClick={() => {
                           if (!isEditing) return;
                           if (pendingPermissions.includes(perm.id)) {
-                            setPendingPermissions(pendingPermissions.filter(p => p !== perm.id));
+                            setPendingPermissions(pendingPermissions.filter((p) => p !== perm.id));
                           } else {
                             setPendingPermissions([...pendingPermissions, perm.id]);
                           }
                         }}
-                        className={`flex items-center gap-2 p-2 rounded-lg text-sm transition-all ${
-                          isEditing ? 'cursor-pointer hover:bg-gray-800' : ''
-                        } ${hasPerm ? 'bg-purple-500/10 text-purple-200' : 'bg-gray-800/50 text-gray-500'}`}
+                        className={`flex items-center gap-2 p-2 rounded-lg text-sm transition-all
+                          ${isEditing ? "cursor-pointer hover:bg-gray-800" : ""}
+                          ${hasPerm ? "bg-purple-500/10 text-purple-200" : "bg-gray-800/50 text-gray-500"}`}
                       >
-                        <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
-                          hasPerm ? 'bg-purple-500' : 'bg-gray-700'
-                        }`}>
+                        <div className={`w-4 h-4 rounded-full flex items-center justify-center
+                          ${hasPerm ? "bg-purple-500" : "bg-gray-700"}`}>
                           {hasPerm && <Check size={10} className="text-white" />}
                         </div>
                         {perm.label}
@@ -284,7 +226,7 @@ const StaffManager = () => {
                   )}
                 </div>
               </div>
-            </motion.div>
+            </motion.article>
           ))
         )}
       </div>
@@ -293,12 +235,12 @@ const StaffManager = () => {
       <AnimatePresence>
         {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               className="absolute inset-0 bg-black/60 backdrop-blur-sm"
               onClick={() => setIsModalOpen(false)}
             />
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -306,47 +248,40 @@ const StaffManager = () => {
             >
               <div className="p-6 border-b border-gray-800 flex justify-between items-center bg-gray-800/30">
                 <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                  <Plus className="text-purple-400" />
+                  <Plus className="text-purple-400" aria-hidden="true" />
                   Nuevo Empleado
                 </h3>
-                <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-white">
+                <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-white" aria-label="Cerrar modal">
                   <X size={24} />
                 </button>
               </div>
 
               <form onSubmit={handleSubmit} className="p-6 space-y-5">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Nombre Completo</label>
+                  <label htmlFor="emp-name" className="block text-sm font-medium text-gray-300 mb-1">Nombre Completo</label>
                   <input
-                    required
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    id="emp-name" required type="text" value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
                     placeholder="Ej. Juan Pérez"
                   />
                 </div>
-                
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Correo Electrónico</label>
+                  <label htmlFor="emp-email" className="block text-sm font-medium text-gray-300 mb-1">Correo Electrónico</label>
                   <input
-                    required
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    id="emp-email" required type="email" value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
                     placeholder="cajero@tutienda.com"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Contraseña de acceso</label>
+                  <label htmlFor="emp-password" className="block text-sm font-medium text-gray-300 mb-1">Contraseña de acceso</label>
                   <input
-                    required
-                    type="password"
-                    minLength={6}
-                    value={formData.password}
-                    onChange={(e) => setFormData({...formData, password: e.target.value})}
+                    id="emp-password" required type="password" minLength={6} value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
                     placeholder="Mínimo 6 caracteres"
                   />
@@ -356,26 +291,24 @@ const StaffManager = () => {
                   <label className="block text-sm font-medium text-gray-300 mb-3 border-t border-gray-800 pt-4 mt-4">
                     Permisos Iniciales
                   </label>
-                  <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
-                    {AVAILABLE_PERMISSIONS.map(perm => (
-                      <div 
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
+                    {AVAILABLE_PERMISSIONS.map((perm) => (
+                      <div
                         key={perm.id}
-                        onClick={() => handleTogglePermission(perm.id, formData.permissions, (p) => setFormData({...formData, permissions: p}))}
-                        className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer border transition-all ${
-                          formData.permissions.includes(perm.id) 
-                            ? 'bg-purple-500/20 border-purple-500/50' 
-                            : 'bg-gray-800/50 border-gray-700/50 hover:bg-gray-800'
-                        }`}
+                        onClick={() => handleTogglePermission(perm.id, formData.permissions, (p) => setFormData({ ...formData, permissions: p }))}
+                        className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer border transition-all
+                          ${formData.permissions.includes(perm.id)
+                            ? "bg-purple-500/20 border-purple-500/50"
+                            : "bg-gray-800/50 border-gray-700/50 hover:bg-gray-800"}`}
                       >
-                        <div className={`w-5 h-5 rounded flex-shrink-0 flex items-center justify-center border transition-colors ${
-                          formData.permissions.includes(perm.id)
-                            ? 'bg-purple-500 border-purple-500'
-                            : 'border-gray-500 bg-transparent'
-                        }`}>
+                        <div className={`w-5 h-5 rounded flex-shrink-0 flex items-center justify-center border transition-colors
+                          ${formData.permissions.includes(perm.id)
+                            ? "bg-purple-500 border-purple-500"
+                            : "border-gray-500 bg-transparent"}`}>
                           {formData.permissions.includes(perm.id) && <Check size={14} className="text-white" />}
                         </div>
                         <div>
-                          <p className={`font-medium text-sm ${formData.permissions.includes(perm.id) ? 'text-purple-200' : 'text-gray-300'}`}>
+                          <p className={`font-medium text-sm ${formData.permissions.includes(perm.id) ? "text-purple-200" : "text-gray-300"}`}>
                             {perm.label}
                           </p>
                           <p className="text-xs text-gray-500">{perm.desc}</p>
