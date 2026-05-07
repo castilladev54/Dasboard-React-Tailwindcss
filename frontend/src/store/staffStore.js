@@ -7,14 +7,22 @@ axios.defaults.withCredentials = true;
 
 export const useStaffStore = create((set, get) => ({
   staff: [],
+  total: 0,
   isLoading: false,
   error: null,
 
-  fetchStaff: async () => {
+  fetchStaff: async (dateFilter = 'all') => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.get(API_URL);
-      set({ staff: response.data.employees || [], isLoading: false });
+      const params = new URLSearchParams();
+      if (dateFilter && dateFilter !== 'all') params.append('dateFilter', dateFilter);
+      const url = params.toString() ? `${API_URL}?${params}` : API_URL;
+      const response = await axios.get(url);
+      set({
+        staff: response.data.employees || [],
+        total: response.data.total || 0,
+        isLoading: false,
+      });
     } catch (error) {
       set({
         error: error.response?.data?.message || "Error al cargar los empleados",

@@ -7,14 +7,20 @@ axios.defaults.withCredentials = true;
 
 export const useProductStore = create((set) => ({
   products: [],
+  posProducts: [],      // catálogo completo para el POS (sin paginación)
+  isPosLoading: false,  // loading exclusivo del fetch masivo
   pagination: { total: 0, page: 1, limit: 20, totalPages: 0 },
   isLoading: false,
   error: null,
 
-  fetchProducts: async (page = 1, limit = 20) => {
+  fetchProducts: async (page = 1, limit = 20, search = "") => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.get(`${API_URL}?page=${page}&limit=${limit}`);
+      // Construir URL con paginación y, opcionalmente, búsqueda en servidor
+      const params = new URLSearchParams({ page, limit });
+      if (search.trim()) params.set("search", search.trim());
+
+      const response = await axios.get(`${API_URL}?${params.toString()}`);
       const payload = response.data;
 
       // El backend devuelve los campos de paginación en el nivel raíz:
@@ -31,6 +37,31 @@ export const useProductStore = create((set) => ({
       });
     } catch (error) {
       set({ error: error.response?.data?.message || "Error al obtener los productos", isLoading: false });
+    }
+  },
+
+  /**
+   * Carga TODO el catálogo activo en una sola petición (limit=5000).
+   * Úsalo al abrir el POS para habilitar búsqueda local sin internet.
+   * Los resultados se guardan en `posProducts` y no afectan a `products`.
+   */
+  fetchAllForPOS: async () => {
+    set({ isPosLoading: true, error: null });
+    try {
+      const response = await axios.get(`${API_URL}?page=1&limit=5000`);
+      const payload = response.data;
+      const products =
+        payload.products ||
+        payload.data ||
+        (Array.isArray(payload) ? payload : []);
+      // Filtramos solo activos por si el backend no lo hace
+      const active = products.filter((p) => p.isActive !== false);
+      set({ posProducts: active, isPosLoading: false });
+    } catch (error) {
+      set({
+        error: error.response?.data?.message || "Error al cargar el catálogo POS",
+        isPosLoading: false,
+      });
     }
   },
 

@@ -1,9 +1,18 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Users, Shield, Plus, X, Check, Trash2, Key, Loader } from "lucide-react";
+import { Users, Shield, Plus, X, Check, Trash2, Key, Loader, Calendar, ChevronDown } from "lucide-react";
 import { useStaffStore } from "../store/staffStore";
 import { useAuthStore } from "../store/authStore";
 import toast from "react-hot-toast";
+
+const DATE_FILTER_OPTIONS = [
+  { value: "all",    label: "Todos"    },
+  { value: "today",  label: "Hoy"      },
+  { value: "ayer",   label: "Ayer"     },
+  { value: "7days",  label: "7 días"   },
+  { value: "30days", label: "30 días"  },
+  { value: "month",  label: "Este mes" },
+];
 
 const AVAILABLE_PERMISSIONS = [
   { id: "pos_access", label: "Punto de Venta", desc: "Permite registrar ventas" },
@@ -16,15 +25,31 @@ const AVAILABLE_PERMISSIONS = [
 const StaffManager = () => {
   const { staff, isLoading, fetchStaff, createEmployee, updateEmployeePermissions, deleteEmployee } = useStaffStore();
   const { user } = useAuthStore();
-  
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formData, setFormData] = useState({ name: "", email: "", password: "", permissions: [] });
-  const [editingId, setEditingId] = useState(null);
+
+  const [isModalOpen,      setIsModalOpen]      = useState(false);
+  const [formData,         setFormData]         = useState({ name: "", email: "", password: "", permissions: [] });
+  const [editingId,        setEditingId]        = useState(null);
   const [pendingPermissions, setPendingPermissions] = useState(null);
+  const [dateFilter,       setDateFilter]       = useState("all");
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+
+  const datePickerRef = useRef(null);
 
   useEffect(() => {
-    fetchStaff();
-  }, [fetchStaff]);
+    fetchStaff(dateFilter);
+  }, [fetchStaff, dateFilter]);
+
+  // Cerrar el picker al hacer clic fuera
+  useEffect(() => {
+    const handleOutside = (e) => {
+      if (datePickerRef.current && !datePickerRef.current.contains(e.target))
+        setIsDatePickerOpen(false);
+    };
+    document.addEventListener("mousedown", handleOutside);
+    return () => document.removeEventListener("mousedown", handleOutside);
+  }, []);
+
+  const activeDateLabel = DATE_FILTER_OPTIONS.find((o) => o.value === dateFilter)?.label || "Todos";
 
   const handleTogglePermission = (permId, currentPerms, setPermsFunc) => {
     if (currentPerms.includes(permId)) {
@@ -101,6 +126,64 @@ const StaffManager = () => {
           Nuevo Empleado
         </button>
       </motion.div>
+
+      {/* Filtro de fecha */}
+      <nav aria-label="Filtrar empleados por fecha" className="flex items-center gap-3 flex-wrap">
+        <div className="relative" ref={datePickerRef}>
+          <button
+            type="button"
+            onClick={() => setIsDatePickerOpen((p) => !p)}
+            aria-expanded={isDatePickerOpen}
+            aria-haspopup="true"
+            aria-label={`Filtrar por fecha: ${activeDateLabel}`}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-800/60 border border-gray-700 text-gray-200 text-sm font-medium hover:border-purple-500/50 transition-all"
+          >
+            <Calendar size={16} className="text-purple-400" aria-hidden="true" />
+            <span>{activeDateLabel}</span>
+            <ChevronDown
+              size={14}
+              aria-hidden="true"
+              className={`text-gray-400 transition-transform duration-200 ${isDatePickerOpen ? "rotate-180" : ""}`}
+            />
+          </button>
+
+          <AnimatePresence>
+            {isDatePickerOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.15 }}
+                className="absolute left-0 top-full mt-2 z-30 bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl p-2 min-w-[160px]"
+                role="menu"
+              >
+                {DATE_FILTER_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    role="menuitem"
+                    onClick={() => { setDateFilter(opt.value); setIsDatePickerOpen(false); }}
+                    className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                      dateFilter === opt.value
+                        ? "bg-purple-500/20 text-purple-300 border border-purple-500/30"
+                        : "text-gray-300 hover:bg-gray-800"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Badge de cantidad */}
+        {staff.length > 0 && (
+          <span className="text-xs text-gray-400 bg-gray-800/60 border border-gray-700 px-3 py-1.5 rounded-xl">
+            {staff.length} empleado{staff.length !== 1 ? "s" : ""}
+          </span>
+        )}
+      </nav>
 
       {/* Lista de Empleados */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

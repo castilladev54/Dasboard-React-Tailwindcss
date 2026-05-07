@@ -22,11 +22,12 @@ import BarcodeScanner from "./BarcodeScanner";
 const PAYMENT_METHODS = ["Efectivo", "Efectivo Bs", "Tarjeta", "Transferencia", "Pago Movil"];
 
 const DATE_FILTER_OPTIONS = [
-  { value: "all", label: "Todas" },
-  { value: "today", label: "Hoy" },
-  { value: "ayer", label: "Ayer" },
-  { value: "30days", label: "30 días" },
-  { value: "month", label: "Este mes" },
+  { value: "all",    label: "Todas"    },
+  { value: "today",  label: "Hoy"      },
+  { value: "ayer",   label: "Ayer"     },
+  { value: "7days",  label: "7 días"   },
+  { value: "30days", label: "30 días"  },
+  { value: "month",  label: "Este mes" },
 ];
 
 /* ─── Helpers ────────────────────────────────────────────── */
@@ -674,7 +675,13 @@ const buildHistoryColumns = (onViewDetail, toBs) => [
 ════════════════════════════════════════════════════════════ */
 const SalesManager = () => {
   const { sales, pagination, isLoading, error, fetchSales, createSale, fetchSaleById } = useSaleStore();
-  const { products, pagination: productsPagination, fetchProducts, fetchProductByBarcode } = useProductStore();
+  const {
+    posProducts,
+    isPosLoading,
+    pagination: productsPagination,
+    fetchAllForPOS,
+    fetchProductByBarcode,
+  } = useProductStore();
   const { staff, fetchStaff } = useStaffStore();
   const { user } = useAuthStore();
   const { exchangeRate, setExchangeRate, toBs } = useCurrencyStore();
@@ -690,7 +697,6 @@ const SalesManager = () => {
   const [cartPulse, setCartPulse] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [productsPage, setProductsPage] = useState(1);
   const [sellerFilter, setSellerFilter] = useState(null);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [dateFrom, setDateFrom] = useState("");
@@ -700,8 +706,6 @@ const SalesManager = () => {
   const submitBtnRef = useRef(null);
   const paymentSelectRef = useRef(null);
   const datePickerRef = useRef(null);
-
-  const PRODUCTS_PER_PAGE = 20;
 
   useEffect(() => {
     fetchStaff();
@@ -722,19 +726,10 @@ const SalesManager = () => {
     return () => document.removeEventListener("mousedown", handleOutside);
   }, []);
 
-  // Efecto unificado: paginación normal O búsqueda ampliada (debounced)
+  // Al abrir el POS se carga TODO el catálogo una sola vez → búsqueda 100 % local.
   useEffect(() => {
-    let timer;
-    if (searchTerm.trim()) {
-      // Con búsqueda activa: esperar 350ms y traer hasta 100 productos
-      // para que el filtro local encuentre en todo el inventario
-      timer = setTimeout(() => fetchProducts(1, 100), 350);
-    } else {
-      // Sin búsqueda: paginación normal
-      fetchProducts(productsPage, PRODUCTS_PER_PAGE);
-    }
-    return () => clearTimeout(timer);
-  }, [searchTerm, productsPage, fetchProducts]);
+    if (isFormOpen) fetchAllForPOS();
+  }, [isFormOpen, fetchAllForPOS]);
 
   useEffect(() => {
     if (!isScannerOpen && isFormOpen) setTimeout(() => searchInputRef.current?.focus(), 100);
@@ -803,10 +798,9 @@ const SalesManager = () => {
 
   const cancelForm = () => { setIsFormOpen(false); setIsCartOpen(false); setItems([]); setPaymentMethod("Efectivo"); };
 
-  /* ── Buscador: al limpiar, volver a página 1 del catálogo ── */
+  /* ── Buscador: filtrado 100 % local sobre posProducts ── */
   const handleSearch = (term) => {
     setSearchTerm(term);
-    if (!term.trim()) setProductsPage(1);
   };
 
   /* ── Barcode scan ── */
@@ -822,7 +816,8 @@ const SalesManager = () => {
       }
     };
 
-    const local = products.find((p) => p.barcode === code || p._id === code);
+    // Primero busca en el catálogo local (posProducts) — sin red.
+    const local = posProducts.find((p) => p.barcode === code || p._id === code);
     if (local) {
       handleAddItem(local, qty);
       toast.success(`Añadido: ${qty}x ${local.name}`);
@@ -830,6 +825,7 @@ const SalesManager = () => {
       setSearchTerm("");
       return;
     }
+    // Fallback a red solo si el producto no está en posProducts.
     try {
       const res = await fetchProductByBarcode(code);
       const product = res?.product || res;
@@ -840,7 +836,7 @@ const SalesManager = () => {
         setSearchTerm("");
       } else throw new Error();
     } catch { toast.error(`Código "${code}" no encontrado`); }
-  }, [products, handleAddItem, fetchProductByBarcode]);
+  }, [posProducts, handleAddItem, fetchProductByBarcode]);
 
   /* ── Submit ── */
   const handleSubmit = async (e) => {
@@ -854,7 +850,8 @@ const SalesManager = () => {
       });
       toast.success("Venta registrada con éxito");
       cancelForm();
-      fetchProducts();
+      // Refresca el catálogo POS para reflejar el stock actualizado.
+      fetchAllForPOS();
     } catch (err) { toast.error(err?.response?.data?.message || error || "Error al registrar la venta"); }
   };
 
@@ -906,7 +903,21 @@ const SalesManager = () => {
 
   /* ── Datos derivados ── */
   const currentTotal = items.reduce((a, i) => a + itemSubtotal(i), 0);
-  const filteredProducts = products.filter((p) => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
+
+  /**
+   * Filtrado LOCAL de productos — no hace ningún fetch.
+   * Busca coincidencias en nombre (case-insensitive) y código de barras.
+   * Si no hay término de búsqueda devuelve el catálogo completo.
+   */
+  const filteredProducts = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return posProducts;
+    return posProducts.filter(
+      (p) =>
+        p.name.toLowerCase().includes(term) ||
+        (p.barcode && p.barcode.toLowerCase().includes(term))
+    );
+  }, [posProducts, searchTerm]);
   // filteredSales = ventas de la página actual (el filtrado real lo hace el backend).
   // filteredTotal suma solo la página visible; para el total real se usa pagination.totalAmount si existe.
   const { filteredSales, filteredTotal } = useMemo(() => {
@@ -960,7 +971,7 @@ const SalesManager = () => {
             onSubmit={handleSubmit}
             paymentMethod={paymentMethod}
             onPaymentChange={setPaymentMethod}
-            isLoading={isLoading}
+            isLoading={isLoading || isPosLoading}
             currentTotal={currentTotal}
             toBs={toBs}
             filteredProducts={filteredProducts}
@@ -973,9 +984,9 @@ const SalesManager = () => {
             searchInputRef={searchInputRef}
             isCartOpen={isCartOpen}
             setIsCartOpen={setIsCartOpen}
-            productsPage={productsPage}
-            productsTotalPages={productsTotalPages}
-            onProductsPageChange={setProductsPage}
+            productsPage={1}
+            productsTotalPages={1}
+            onProductsPageChange={() => {}}
           />
         )}
       </AnimatePresence>
