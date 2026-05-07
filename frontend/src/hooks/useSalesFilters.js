@@ -53,6 +53,7 @@ export function useSalesFilters() {
   }, [sales, pagination]);
 
   const totalPages = pagination?.totalPages || 1;
+  const totalDocs  = pagination?.totalDocs  ?? sales.length;
 
   return {
     dateFilter, setDateFilter,
@@ -65,6 +66,7 @@ export function useSalesFilters() {
     activeDateLabel,
     filteredTotal,
     totalPages,
+    totalDocs,
     DATE_FILTER_OPTIONS,
   };
 }

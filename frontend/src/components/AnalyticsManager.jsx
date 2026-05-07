@@ -84,6 +84,11 @@ const filterByDate = (items, dateFilter) => {
     const day = new Date(d.getFullYear(), d.getMonth(), d.getDate());
 
     if (dateFilter === 'today') return day.getTime() === today.getTime();
+    if (dateFilter === 'ayer') {
+      const yesterday = new Date(today);
+      yesterday.setDate(today.getDate() - 1);
+      return day.getTime() === yesterday.getTime();
+    }
     if (dateFilter === '7days') { const l = new Date(today); l.setDate(today.getDate() - 7); return day >= l; }
     if (dateFilter === '30days') { const l = new Date(today); l.setDate(today.getDate() - 30); return day >= l; }
     if (dateFilter === 'month') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
@@ -178,6 +183,7 @@ const AnalyticsManager = () => {
           >
             <option value="all" className="bg-[#1a1a24]">Todo el tiempo</option>
             <option value="today" className="bg-[#1a1a24]">Hoy</option>
+            <option value="ayer" className="bg-[#1a1a24]">Ayer</option>
             <option value="7days" className="bg-[#1a1a24]">Últimos 7 días</option>
             <option value="30days" className="bg-[#1a1a24]">Últimos 30 días</option>
             <option value="month" className="bg-[#1a1a24]">Este mes</option>

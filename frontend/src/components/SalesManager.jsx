@@ -3,27 +3,27 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus, Check, ShoppingCart, Calendar, HelpCircle, X, ChevronDown,
 } from "lucide-react";
-import { useSaleStore }    from "../store/saleStore";
+import { useSaleStore } from "../store/saleStore";
 import { useProductStore } from "../store/productStore";
-import { useStaffStore }   from "../store/staffStore";
-import { useAuthStore }    from "../store/authStore";
+import { useStaffStore } from "../store/staffStore";
+import { useAuthStore } from "../store/authStore";
 import { useCurrencyStore } from "../store/currencyStore";
 import toast from "react-hot-toast";
 import { fmtUSD, fmtBs, itemSubtotal, getExpirationInfo } from "../utils/salesFormatters";
 
-import Button      from "./atoms/Button";
-import Badge       from "./atoms/Badge";
-import KBD         from "./atoms/KBD";
-import DataTable   from "./organisms/DataTable";
-import BarcodeScanner  from "./BarcodeScanner";
+import Button from "./atoms/Button";
+import Badge from "./atoms/Badge";
+import KBD from "./atoms/KBD";
+import DataTable from "./organisms/DataTable";
+import BarcodeScanner from "./BarcodeScanner";
 import ExchangeRateBar from "./pos/ExchangeRateBar";
-import HelpModal       from "./pos/HelpModal";
-import SaleDetailView  from "./pos/SaleDetailView";
-import SalePOSForm     from "./pos/SalePOSForm";
+import HelpModal from "./pos/HelpModal";
+import SaleDetailView from "./pos/SaleDetailView";
+import SalePOSForm from "./pos/SalePOSForm";
 
-import { usePOSCart }      from "../hooks/usePOSCart";
+import { usePOSCart } from "../hooks/usePOSCart";
 import { useSalesFilters, DATE_FILTER_OPTIONS } from "../hooks/useSalesFilters";
-import { usePOSKeyboard }  from "../hooks/usePOSKeyboard";
+import { usePOSKeyboard } from "../hooks/usePOSKeyboard";
 
 /* ─── buildHistoryColumns ────────────────────────────────── */
 const buildHistoryColumns = (onViewDetail, toBs) => [
@@ -103,15 +103,15 @@ const SalesManager = () => {
   const { exchangeRate, setExchangeRate, toBs } = useCurrencyStore();
 
   /* ── UI state local ── */
-  const [isFormOpen,   setIsFormOpen]   = useState(false);
-  const [viewedSale,   setViewedSale]   = useState(null);
-  const [searchTerm,   setSearchTerm]   = useState("");
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [viewedSale, setViewedSale] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const [isScannerOpen, setIsScannerOpen] = useState(false);
-  const [showHelp,     setShowHelp]     = useState(false);
-  const [isCartOpen,   setIsCartOpen]   = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
 
-  const searchInputRef  = useRef(null);
-  const submitBtnRef    = useRef(null);
+  const searchInputRef = useRef(null);
+  const submitBtnRef = useRef(null);
   const paymentSelectRef = useRef(null);
 
   /* ── Custom hooks ── */
@@ -123,12 +123,12 @@ const SalesManager = () => {
 
   const {
     dateFilter, setDateFilter,
-    dateFrom,   setDateFrom,
-    dateTo,     setDateTo,
+    dateFrom, setDateFrom,
+    dateTo, setDateTo,
     sellerFilter, setSellerFilter,
     isDatePickerOpen, setIsDatePickerOpen,
     currentPage, setCurrentPage,
-    datePickerRef, activeDateLabel, filteredTotal, totalPages,
+    datePickerRef, activeDateLabel, filteredTotal, totalPages, totalDocs,
   } = useSalesFilters();
 
   /* ── Effects ── */
@@ -214,7 +214,7 @@ const SalesManager = () => {
     if (!term) return posProducts;
     return posProducts.filter(
       (p) => p.name.toLowerCase().includes(term) ||
-             (p.barcode && p.barcode.toLowerCase().includes(term))
+        (p.barcode && p.barcode.toLowerCase().includes(term))
     );
   }, [posProducts, searchTerm]);
 
@@ -363,7 +363,7 @@ const SalesManager = () => {
               </div>
 
               {/* Filtro por vendedor */}
-              {(user?.role === "owner" || user?.role === "admin") && (
+              {user?.role !== "employee" && (
                 <div className="flex items-center gap-2">
                   <label htmlFor="seller-filter" className="sr-only">Filtrar por vendedor</label>
                   <select
@@ -388,17 +388,47 @@ const SalesManager = () => {
               )}
             </div>
 
-            {/* Total filtrado */}
-            {(dateFilter !== "all" || dateFrom) && (
-              <div className="flex items-center gap-4 bg-gradient-to-r from-amber-500/10 to-blue-500/10 border border-amber-500/20 rounded-xl px-4 py-2">
-                <div className="text-right">
-                  <p className="text-xs text-gray-400">Total filtrado</p>
-                  <span className="text-lg font-bold text-amber-500">{fmtUSD(filteredTotal)}</span>
-                  <span className="text-sm text-blue-400 ml-2">{fmtBs(filteredTotal, toBs)}</span>
-                </div>
-              </div>
-            )}
+
           </div>
+
+          {/* ── Resumen vendedor seleccionado ── */}
+          {sellerFilter && (() => {
+            const seller = staff.find((e) => e._id === sellerFilter);
+            const initial = seller?.name?.charAt(0).toUpperCase() || "?";
+            return (
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 mb-4
+                bg-gradient-to-r from-orange-500/10 via-amber-500/5 to-transparent
+                border border-orange-500/25 rounded-2xl">
+                <div className="w-11 h-11 rounded-full bg-orange-500/20 border border-orange-500/40
+                  flex items-center justify-center text-orange-400 font-bold text-xl shrink-0">
+                  {initial}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-gray-400 uppercase tracking-widest mb-0.5">Vendedor</p>
+                  <p className="text-white font-bold text-base truncate">{seller?.name || "Vendedor"}</p>
+                  <p className="text-xs text-orange-400/70 mt-0.5">{activeDateLabel}</p>
+                </div>
+                <div className="flex gap-6 sm:gap-8">
+                  <div className="text-center">
+                    <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-0.5">Ventas</p>
+                    <p className="text-2xl font-extrabold text-white">{totalDocs}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-0.5">Total</p>
+                    <p className="text-2xl font-extrabold text-amber-500">{fmtUSD(filteredTotal)}</p>
+                    <p className="text-xs text-blue-400">{fmtBs(filteredTotal, toBs)}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => { setSellerFilter(null); setCurrentPage(1); }}
+                  aria-label="Quitar filtro de vendedor"
+                  className="text-gray-500 hover:text-white transition p-1 shrink-0"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            );
+          })()}
 
           <DataTable
             columns={buildHistoryColumns(handleViewDetail, toBs)}

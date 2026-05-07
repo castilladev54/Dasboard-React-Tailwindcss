@@ -1,18 +1,11 @@
 import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Users, Shield, Plus, X, Check, Trash2, Key, Loader, Calendar, ChevronDown } from "lucide-react";
+import { Users, Shield, Plus, X, Check, Trash2, Key, Loader, Calendar, ChevronDown, ShoppingCart, DollarSign } from "lucide-react";
 import { useStaffStore } from "../store/staffStore";
 import { useAuthStore } from "../store/authStore";
+import { DATE_FILTER_OPTIONS } from "../hooks/useSalesFilters";
 import toast from "react-hot-toast";
 
-const DATE_FILTER_OPTIONS = [
-  { value: "all",    label: "Todos"    },
-  { value: "today",  label: "Hoy"      },
-  { value: "ayer",   label: "Ayer"     },
-  { value: "7days",  label: "7 días"   },
-  { value: "30days", label: "30 días"  },
-  { value: "month",  label: "Este mes" },
-];
 
 const AVAILABLE_PERMISSIONS = [
   { id: "pos_access", label: "Punto de Venta", desc: "Permite registrar ventas" },
@@ -209,6 +202,20 @@ const StaffManager = () => {
                 <button onClick={() => handleDelete(emp._id)} className="text-gray-500 hover:text-red-400 transition-colors p-1 bg-gray-800 rounded-lg">
                   <Trash2 size={18} />
                 </button>
+              </div>
+
+              {/* salesStats del período */}
+              <div className="px-5 py-3 bg-black/20 border-b border-gray-700/50 flex items-center gap-4 text-xs">
+                <span className="flex items-center gap-1.5 text-purple-300">
+                  <ShoppingCart size={13} aria-hidden="true" />
+                  <strong>{emp.salesStats?.salesCount ?? 0}</strong>
+                  <span className="text-gray-500">ventas</span>
+                </span>
+                <span className="flex items-center gap-1.5 text-green-300">
+                  <DollarSign size={13} aria-hidden="true" />
+                  <strong>${(emp.salesStats?.totalAmount ?? 0).toFixed(2)}</strong>
+                  <span className="text-gray-500">en el período</span>
+                </span>
               </div>
 
               <div className="p-5 bg-gray-900/30">
