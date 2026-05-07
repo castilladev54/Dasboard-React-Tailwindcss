@@ -11,13 +11,15 @@ export const useSaleStore = create((set) => ({
   isLoading: false,
   error: null,
 
-  fetchSales: async (page = 1, limit = 20, seller = null, dateFilter = 'all') => {
+  fetchSales: async (page = 1, limit = 20, seller = null, dateFilter = 'all', dateFrom = undefined, dateTo = undefined) => {
     set({ isLoading: true, error: null });
     try {
       const params = new URLSearchParams({ page, limit });
       if (seller) params.append('seller', seller);
       if (dateFilter && dateFilter !== 'all') params.append('dateFilter', dateFilter);
-      
+      if (dateFrom) params.append('dateFrom', dateFrom);
+      if (dateTo)   params.append('dateTo',   dateTo);
+
       const response = await axios.get(`${API_URL}?${params.toString()}`);
       const payload = response.data;
 

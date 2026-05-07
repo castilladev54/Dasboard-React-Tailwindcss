@@ -3,35 +3,35 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus, Check, ShoppingCart, Trash2, Search, ArrowLeft,
   RefreshCw, Calendar, Camera, HelpCircle, Keyboard, X, AlertTriangle,
-  ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight, ChevronDown,
 } from "lucide-react";
-import { useSaleStore }     from "../store/saleStore";
-import { useProductStore }  from "../store/productStore";
-import { useStaffStore }    from "../store/staffStore";
-import { useAuthStore }     from "../store/authStore";
+import { useSaleStore } from "../store/saleStore";
+import { useProductStore } from "../store/productStore";
+import { useStaffStore } from "../store/staffStore";
+import { useAuthStore } from "../store/authStore";
 import { useCurrencyStore } from "../store/currencyStore";
 import toast from "react-hot-toast";
 
-import Button       from "./atoms/Button";
-import Badge        from "./atoms/Badge";
-import InputText    from "./atoms/InputText";
-import DataTable    from "./organisms/DataTable";
+import Button from "./atoms/Button";
+import Badge from "./atoms/Badge";
+import InputText from "./atoms/InputText";
+import DataTable from "./organisms/DataTable";
 import BarcodeScanner from "./BarcodeScanner";
 
 /* ─── Constantes ─────────────────────────────────────────── */
 const PAYMENT_METHODS = ["Efectivo", "Efectivo Bs", "Tarjeta", "Transferencia", "Pago Movil"];
 
 const DATE_FILTER_OPTIONS = [
-  { value: "all",    label: "Todas"     },
-  { value: "today",  label: "Hoy"       },
-  { value: "7days",  label: "7 días"    },
-  { value: "30days", label: "30 días"   },
-  { value: "month",  label: "Este mes"  },
+  { value: "all", label: "Todas" },
+  { value: "today", label: "Hoy" },
+  { value: "ayer", label: "Ayer" },
+  { value: "30days", label: "30 días" },
+  { value: "month", label: "Este mes" },
 ];
 
 /* ─── Helpers ────────────────────────────────────────────── */
 const fmtUSD = (v) => `$${Number(v || 0).toFixed(2)}`;
-const fmtBs  = (v, toBs) => `Bs ${toBs(Number(v || 0)).toFixed(2)}`;
+const fmtBs = (v, toBs) => `Bs ${toBs(Number(v || 0)).toFixed(2)}`;
 const itemSubtotal = (item) => (parseFloat(item.quantity) || 0) * item.unit_price;
 
 /** Calcula info de vencimiento de un producto (defensivo: no-op si no existe el campo) */
@@ -48,20 +48,8 @@ const getExpirationInfo = (expirationDate) => {
   return { status: "ok", days: diffDays, label: `Vence: ${label}`, color: "text-gray-400 bg-white/5 border-white/10" };
 };
 
-const filterSalesByDate = (sales, filter) => {
-  if (filter === "all") return sales;
-  const now   = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  return sales.filter((s) => {
-    const d   = new Date(s.createdAt);
-    const day = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-    if (filter === "today")  return day.getTime() === today.getTime();
-    if (filter === "7days")  { const l = new Date(today); l.setDate(today.getDate() - 7);  return day >= l; }
-    if (filter === "30days") { const l = new Date(today); l.setDate(today.getDate() - 30); return day >= l; }
-    if (filter === "month")  return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-    return true;
-  });
-};
+// filterSalesByDate eliminado: el filtrado por fecha se delega al backend
+// mediante el parámetro dateFilter en fetchSales().
 
 /* ─── Átomo: indicador de tecla ──────────────────────────── */
 const KBD = ({ children }) => (
@@ -75,7 +63,7 @@ const KBD = ({ children }) => (
 ════════════════════════════════════════════════════════════ */
 const ExchangeRateBar = ({ exchangeRate, onRateChange }) => {
   const [editing, setEditing] = useState(false);
-  const [temp,    setTemp]    = useState(exchangeRate);
+  const [temp, setTemp] = useState(exchangeRate);
 
   const save = () => {
     onRateChange(temp);
@@ -96,7 +84,7 @@ const ExchangeRateBar = ({ exchangeRate, onRateChange }) => {
             className="w-28 px-3 py-1 text-sm" autoFocus />
           <span className="text-sm text-gray-400">Bs</span>
           <Button variant="primary" size="sm" onClick={save}>Guardar</Button>
-          <Button variant="ghost"   size="sm" onClick={() => { setEditing(false); setTemp(exchangeRate); }}>Cancelar</Button>
+          <Button variant="ghost" size="sm" onClick={() => { setEditing(false); setTemp(exchangeRate); }}>Cancelar</Button>
         </div>
       ) : (
         <div className="flex items-center gap-2">
@@ -479,11 +467,11 @@ const SaleDetailView = ({ sale, onBack, toBs }) => (
 
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       {[
-        { label: "Método de Pago", value: sale.payment_method,                              cls: "" },
-        { label: "Fecha",          value: new Date(sale.createdAt).toLocaleString(),        cls: "" },
-        { label: "Atendido por",   value: sale.sold_by?.name || "Propietario",              cls: "" },
-        { label: "Total USD",      value: fmtUSD(sale.total_amount),                       cls: "text-amber-500 text-2xl font-bold bg-amber-500/10 border-amber-500/20" },
-        { label: "Total Bs",       value: fmtBs(sale.total_amount, toBs),                  cls: "text-blue-400 text-2xl font-bold bg-blue-500/10 border-blue-500/20" },
+        { label: "Método de Pago", value: sale.payment_method, cls: "" },
+        { label: "Fecha", value: new Date(sale.createdAt).toLocaleString(), cls: "" },
+        { label: "Atendido por", value: sale.sold_by?.name || "Propietario", cls: "" },
+        { label: "Total USD", value: fmtUSD(sale.total_amount), cls: "text-amber-500 text-2xl font-bold bg-amber-500/10 border-amber-500/20" },
+        { label: "Total Bs", value: fmtBs(sale.total_amount, toBs), cls: "text-blue-400 text-2xl font-bold bg-blue-500/10 border-blue-500/20" },
       ].map(({ label, value, cls }) => (
         <div key={label} className={`p-4 rounded-xl border border-white/5 bg-black/20 ${cls}`}>
           <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">{label}</p>
@@ -530,19 +518,19 @@ const SaleDetailView = ({ sale, onBack, toBs }) => (
    SUBCOMPONENTE 6 — Modal de atajos (F1)
 ════════════════════════════════════════════════════════════ */
 const SHORTCUTS_GENERAL = [
-  ["F1",  "Mostrar / ocultar esta ayuda"],
-  ["F2",  "Nueva venta"],
+  ["F1", "Mostrar / ocultar esta ayuda"],
+  ["F2", "Nueva venta"],
   ["Esc", "Cerrar formulario / vista de detalle"],
 ];
 const SHORTCUTS_FORM = [
   ["F3 ó /", "Enfocar buscador de productos"],
-  ["F4",     "Abrir carrito de compras"],
-  ["F9",     "Confirmar / Procesar venta"],
-  ["F5",     "Ciclar método de pago"],
-  ["F6",     "Abrir escáner de cámara"],
-  ["F8",     "Vaciar carrito (con confirmación)"],
-  ["+",      "Aumentar cantidad del último ítem"],
-  ["−",      "Disminuir cantidad del último ítem"],
+  ["F4", "Abrir carrito de compras"],
+  ["F9", "Confirmar / Procesar venta"],
+  ["F5", "Ciclar método de pago"],
+  ["F6", "Abrir escáner de cámara"],
+  ["F8", "Vaciar carrito (con confirmación)"],
+  ["+", "Aumentar cantidad del último ítem"],
+  ["−", "Disminuir cantidad del último ítem"],
 ];
 
 const ShortcutList = ({ items, keyClass }) => (
@@ -687,27 +675,31 @@ const buildHistoryColumns = (onViewDetail, toBs) => [
 const SalesManager = () => {
   const { sales, pagination, isLoading, error, fetchSales, createSale, fetchSaleById } = useSaleStore();
   const { products, pagination: productsPagination, fetchProducts, fetchProductByBarcode } = useProductStore();
-  const { staff, fetchStaff }                                              = useStaffStore();
-  const { user }                                                           = useAuthStore();
-  const { exchangeRate, setExchangeRate, toBs }                           = useCurrencyStore();
+  const { staff, fetchStaff } = useStaffStore();
+  const { user } = useAuthStore();
+  const { exchangeRate, setExchangeRate, toBs } = useCurrencyStore();
 
-  const [isFormOpen,    setIsFormOpen]    = useState(false);
-  const [viewedSale,    setViewedSale]    = useState(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [viewedSale, setViewedSale] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState("Efectivo");
-  const [items,         setItems]         = useState([]);
-  const [searchTerm,    setSearchTerm]    = useState("");
-  const [dateFilter,    setDateFilter]    = useState("all");
+  const [items, setItems] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [dateFilter, setDateFilter] = useState("all");
   const [isScannerOpen, setIsScannerOpen] = useState(false);
-  const [showHelp,      setShowHelp]      = useState(false);
-  const [cartPulse,     setCartPulse]     = useState(false);
-  const [isCartOpen,    setIsCartOpen]    = useState(false);
-  const [currentPage,     setCurrentPage]     = useState(1);
-  const [productsPage,    setProductsPage]    = useState(1);
-  const [sellerFilter,    setSellerFilter]    = useState(null);
+  const [showHelp, setShowHelp] = useState(false);
+  const [cartPulse, setCartPulse] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [productsPage, setProductsPage] = useState(1);
+  const [sellerFilter, setSellerFilter] = useState(null);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
 
-  const searchInputRef   = useRef(null);
-  const submitBtnRef     = useRef(null);
+  const searchInputRef = useRef(null);
+  const submitBtnRef = useRef(null);
   const paymentSelectRef = useRef(null);
+  const datePickerRef = useRef(null);
 
   const PRODUCTS_PER_PAGE = 20;
 
@@ -716,8 +708,19 @@ const SalesManager = () => {
   }, [fetchStaff]);
 
   useEffect(() => {
-    fetchSales(currentPage, 20, sellerFilter, dateFilter);
-  }, [fetchSales, currentPage, sellerFilter, dateFilter]);
+    if (dateFilter === "custom" && (!dateFrom || !dateTo)) return;
+    fetchSales(currentPage, 20, sellerFilter, dateFilter, dateFrom || undefined, dateTo || undefined);
+  }, [fetchSales, currentPage, sellerFilter, dateFilter, dateFrom, dateTo]);
+
+  // Cierra el date picker al hacer clic fuera
+  useEffect(() => {
+    const handleOutside = (e) => {
+      if (datePickerRef.current && !datePickerRef.current.contains(e.target))
+        setIsDatePickerOpen(false);
+    };
+    document.addEventListener("mousedown", handleOutside);
+    return () => document.removeEventListener("mousedown", handleOutside);
+  }, []);
 
   // Efecto unificado: paginación normal O búsqueda ampliada (debounced)
   useEffect(() => {
@@ -762,9 +765,8 @@ const SalesManager = () => {
     if (value !== "" && (isNaN(qty) || qty < 0)) return;
     setItems((prev) => {
       if (qty > prev[index].maxStock) { toast.error(`Máximo stock: ${prev[index].maxStock}`); return prev; }
-      const next = [...prev];
-      next[index].quantity = value;
-      return next;
+      // Spread del objeto para evitar mutar la referencia original (shallow copy bug fix)
+      return prev.map((item, i) => i === index ? { ...item, quantity: value } : item);
     });
   };
 
@@ -792,9 +794,9 @@ const SalesManager = () => {
     setItems((prev) => {
       const next = [...prev];
       const newQty = (parseFloat(next[last].quantity) || 0) + delta;
-      if (newQty <= 0)              { next.splice(last, 1); }
+      if (newQty <= 0) { next.splice(last, 1); }
       else if (newQty > next[last].maxStock) { toast.error(`Stock máx: ${next[last].maxStock}`); return prev; }
-      else                          { next[last].quantity = newQty; }
+      else { next[last].quantity = newQty; }
       return next;
     });
   }, [items]);
@@ -846,8 +848,10 @@ const SalesManager = () => {
     if (items.length === 0) return toast.error("Agrega al menos un artículo");
     const total_amount = items.reduce((a, i) => a + itemSubtotal(i), 0);
     try {
-      await createSale({ customer_id: user?._id || user?.id, payment_method: paymentMethod, total_amount,
-        items: items.map((i) => ({ product_id: i.product_id, quantity: parseFloat(i.quantity) || 0, unit_price: i.unit_price })) });
+      await createSale({
+        customer_id: user?._id || user?.id, payment_method: paymentMethod, total_amount,
+        items: items.map((i) => ({ product_id: i.product_id, quantity: parseFloat(i.quantity) || 0, unit_price: i.unit_price }))
+      });
       toast.success("Venta registrada con éxito");
       cancelForm();
       fetchProducts();
@@ -855,7 +859,7 @@ const SalesManager = () => {
   };
 
   const handleViewDetail = async (id) => {
-    try   { setViewedSale(await fetchSaleById(id)); }
+    try { setViewedSale(await fetchSaleById(id)); }
     catch { toast.error("No se pudo cargar el detalle de la venta"); }
   };
 
@@ -875,7 +879,7 @@ const SalesManager = () => {
         case "F8": e.preventDefault(); if (isFormOpen) clearCart(); return;
         case "Escape":
           e.preventDefault();
-          if (showHelp)   { setShowHelp(false); return; }
+          if (showHelp) { setShowHelp(false); return; }
           if (isScannerOpen) { setIsScannerOpen(false); return; }
           if (viewedSale) { setViewedSale(null); return; }
           if (isCartOpen) { setIsCartOpen(false); return; }
@@ -886,7 +890,7 @@ const SalesManager = () => {
       if (e.key === "/" && !isInput && isFormOpen) { e.preventDefault(); searchInputRef.current?.focus(); return; }
       if (!isInput && isFormOpen) {
         if (e.key === "+" || e.key === "=") { e.preventDefault(); modifyLastItemQty(1); return; }
-        if (e.key === "-")                  { e.preventDefault(); modifyLastItemQty(-1); return; }
+        if (e.key === "-") { e.preventDefault(); modifyLastItemQty(-1); return; }
       }
       if (!isInput) {
         const now = Date.now();
@@ -901,13 +905,25 @@ const SalesManager = () => {
   }, [isFormOpen, viewedSale, showHelp, isScannerOpen, isCartOpen, items, cyclePaymentMethod, clearCart, modifyLastItemQty, handleBarcodeScan]);
 
   /* ── Datos derivados ── */
-  const currentTotal     = items.reduce((a, i) => a + itemSubtotal(i), 0);
+  const currentTotal = items.reduce((a, i) => a + itemSubtotal(i), 0);
   const filteredProducts = products.filter((p) => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  // filteredSales = ventas de la página actual (el filtrado real lo hace el backend).
+  // filteredTotal suma solo la página visible; para el total real se usa pagination.totalAmount si existe.
   const { filteredSales, filteredTotal } = useMemo(() => {
-    return { filteredSales: sales, filteredTotal: sales.reduce((a, s) => a + Number(s.total_amount || 0), 0) };
-  }, [sales]);
+    const pageTotal = sales.reduce((a, s) => a + Number(s.total_amount || 0), 0);
+    const total = Number(pagination?.totalAmount ?? pageTotal);
+    return { filteredSales: sales, filteredTotal: total };
+  }, [sales, pagination]);
 
-  const totalPages         = pagination?.totalPages         || 1;
+  const activeDateLabel = useMemo(() => {
+    if (dateFilter === "custom" && dateFrom && dateTo) {
+      const fmt = (d) => new Date(d + "T00:00:00").toLocaleDateString("es-VE", { day: "2-digit", month: "2-digit", year: "numeric" });
+      return `${fmt(dateFrom)} – ${fmt(dateTo)}`;
+    }
+    return DATE_FILTER_OPTIONS.find((o) => o.value === dateFilter)?.label || "Todas";
+  }, [dateFilter, dateFrom, dateTo]);
+
+  const totalPages = pagination?.totalPages || 1;
   const productsTotalPages = productsPagination?.totalPages || 1;
 
   /* ── Render ── */
@@ -977,29 +993,97 @@ const SalesManager = () => {
       {/* Historial */}
       {!isFormOpen && !viewedSale && (
         <>
-          {/* Filtros de fecha */}
+          {/* Filtros */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-wrap">
-              <nav className="flex items-center gap-2 flex-wrap" aria-label="Filtro por período">
-                <Calendar size={18} className="text-gray-400 shrink-0" aria-hidden="true" />
-                {DATE_FILTER_OPTIONS.map((opt) => (
-                  <Button key={opt.value} size="sm"
-                    variant={dateFilter === opt.value ? "primary" : "secondary"}
-                    onClick={() => setDateFilter(opt.value)}
-                  >
-                    {opt.label}
-                  </Button>
-                ))}
-              </nav>
+            <div className="flex items-center gap-3 flex-wrap">
 
-              {(user?.role === "customer" || user?.role === "admin") && (
+              {/* ── Selector de fecha ── */}
+              <div className="relative" ref={datePickerRef}>
+                <button
+                  type="button"
+                  onClick={() => setIsDatePickerOpen((p) => !p)}
+                  aria-expanded={isDatePickerOpen}
+                  aria-haspopup="true"
+                  aria-label={`Filtrar por fecha: ${activeDateLabel}`}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-all
+                    ${dateFilter !== "all" || dateFrom
+                      ? "bg-orange-500/15 border-orange-500/40 text-orange-400"
+                      : "bg-[#1a1a24] border-white/10 text-gray-300 hover:border-orange-500/40 hover:text-orange-400"}`}
+                >
+                  <Calendar size={16} aria-hidden="true" />
+                  <span className="max-w-[160px] truncate">{activeDateLabel}</span>
+                  <ChevronDown size={14} className={`transition-transform duration-200 ${isDatePickerOpen ? "rotate-180" : ""}`} />
+                </button>
+
+                <AnimatePresence>
+                  {isDatePickerOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -6, scale: 0.97 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -6, scale: 0.97 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute top-full mt-2 left-0 z-50 bg-[#1a1a24] border border-white/10 rounded-2xl shadow-2xl shadow-black/60 p-4 min-w-[260px]"
+                    >
+                      {/* Períodos rápidos */}
+                      <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Período rápido</p>
+                      <div className="grid grid-cols-2 gap-1.5 mb-4">
+                        {DATE_FILTER_OPTIONS.map((opt) => (
+                          <button
+                            key={opt.value} type="button"
+                            onClick={() => { setDateFilter(opt.value); setDateFrom(""); setDateTo(""); setCurrentPage(1); setIsDatePickerOpen(false); }}
+                            className={`px-3 py-1.5 rounded-xl text-sm font-medium transition-all
+                              ${dateFilter === opt.value && !dateFrom
+                                ? "bg-orange-500 text-black shadow-[0_0_10px_rgba(249,115,22,0.3)]"
+                                : "bg-white/5 text-gray-300 hover:bg-orange-500/20 hover:text-orange-400 border border-white/5"}`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Rango personalizado */}
+                      <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Rango personalizado</p>
+                      <div className="flex flex-col gap-2">
+                        <div>
+                          <label htmlFor="date-from" className="text-xs text-gray-400 mb-1 block">Desde</label>
+                          <input id="date-from" type="date" value={dateFrom}
+                            onChange={(e) => setDateFrom(e.target.value)}
+                            className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:border-orange-500 focus:outline-none transition" />
+                        </div>
+                        <div>
+                          <label htmlFor="date-to" className="text-xs text-gray-400 mb-1 block">Hasta</label>
+                          <input id="date-to" type="date" value={dateTo} min={dateFrom}
+                            onChange={(e) => setDateTo(e.target.value)}
+                            className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:border-orange-500 focus:outline-none transition" />
+                        </div>
+                        <Button variant="primary" size="sm" type="button"
+                          disabled={!dateFrom || !dateTo}
+                          onClick={() => { setDateFilter("custom"); setCurrentPage(1); setIsDatePickerOpen(false); }}
+                          className="mt-1">
+                          <Check size={14} className="mr-1" /> Aplicar rango
+                        </Button>
+                        {(dateFilter !== "all" || dateFrom) && (
+                          <button type="button"
+                            onClick={() => { setDateFilter("all"); setDateFrom(""); setDateTo(""); setCurrentPage(1); setIsDatePickerOpen(false); }}
+                            className="text-xs text-gray-500 hover:text-gray-300 text-center py-1 transition">
+                            Limpiar filtro
+                          </button>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* ── Filtro por vendedor ── */}
+              {(user?.role === "owner" || user?.role === "admin") && (
                 <div className="flex items-center gap-2">
+                  <label htmlFor="seller-filter" className="sr-only">Filtrar por vendedor</label>
                   <select
+                    id="seller-filter"
+                    aria-label="Filtrar por vendedor"
                     value={sellerFilter || ""}
-                    onChange={(e) => {
-                      setSellerFilter(e.target.value || null);
-                      setCurrentPage(1);
-                    }}
+                    onChange={(e) => { setSellerFilter(e.target.value || null); setCurrentPage(1); }}
                     className="bg-[#1a1a24] border border-white/10 rounded-xl px-3 py-1.5 text-sm text-gray-300 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition outline-none cursor-pointer"
                   >
                     <option value="">Todos los vendedores</option>
@@ -1009,14 +1093,16 @@ const SalesManager = () => {
                   </select>
                   {sellerFilter && (
                     <div className="flex items-center gap-1.5 bg-orange-500/10 border border-orange-500/20 text-orange-400 px-3 py-1.5 rounded-xl text-xs font-medium">
-                      <span>Filtrando: {staff.find(e => e._id === sellerFilter)?.name || 'Vendedor'}</span>
-                      <button onClick={() => { setSellerFilter(null); setCurrentPage(1); }} className="hover:text-white transition"><X size={14} /></button>
+                      <span>Filtrando: {staff.find((e) => e._id === sellerFilter)?.name || "Vendedor"}</span>
+                      <button onClick={() => { setSellerFilter(null); setCurrentPage(1); }} aria-label="Limpiar filtro de vendedor" className="hover:text-white transition"><X size={14} /></button>
                     </div>
                   )}
                 </div>
               )}
             </div>
-            {dateFilter !== "all" && (
+
+            {/* Total filtrado */}
+            {(dateFilter !== "all" || dateFrom) && (
               <div className="flex items-center gap-4 bg-gradient-to-r from-amber-500/10 to-blue-500/10 border border-amber-500/20 rounded-xl px-4 py-2">
                 <div className="text-right">
                   <p className="text-xs text-gray-400">Total filtrado</p>
