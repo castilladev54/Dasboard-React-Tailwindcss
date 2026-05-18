@@ -24,15 +24,16 @@ export const useSaleStore = create((set) => ({
       const payload = response.data;
 
       // El backend devuelve los campos de paginación en el nivel raíz:
-      // { success, sales, total, totalPages, currentPage }
+      // { success, sales, total, totalPages, currentPage, totalAmount }
       const sales      = payload.sales || payload.data || (Array.isArray(payload) ? payload : []);
       const total      = payload.total      ?? 0;
       const totalPages = payload.totalPages ?? 1;
       const currentPage = payload.currentPage ?? page;
+      const totalAmount = payload.totalAmount ?? 0;
 
       set({
         sales,
-        pagination: { total, page: currentPage, limit, totalPages },
+        pagination: { total, page: currentPage, limit, totalPages, totalAmount },
         isLoading: false,
       });
     } catch (error) {

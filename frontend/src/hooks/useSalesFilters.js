@@ -49,11 +49,13 @@ export function useSalesFilters() {
 
   const filteredTotal = useMemo(() => {
     const pageTotal = sales.reduce((a, s) => a + Number(s.total_amount || 0), 0);
-    return Number(pagination?.totalAmount ?? pageTotal);
+    return pagination?.totalAmount !== undefined 
+      ? Number(pagination.totalAmount) 
+      : Number(pageTotal);
   }, [sales, pagination]);
 
   const totalPages = pagination?.totalPages || 1;
-  const totalDocs  = pagination?.totalDocs  ?? sales.length;
+  const totalDocs  = pagination?.total ?? sales.length;
 
   return {
     dateFilter, setDateFilter,
