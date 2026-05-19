@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo } from "react";
 import toast from "react-hot-toast";
 import { itemSubtotal } from "../utils/salesFormatters";
 
-const PAYMENT_METHODS = ["Efectivo", "Divisas", "Punto de Venta", "Pago Móvil", "Transferencia", "Zelle"];
+const PAYMENT_METHODS = ["Efectivo", "Divisas", "Punto de Venta", "Pago Movil", "Transferencia", "Zelle"];
 
 export function usePOSCart() {
   const [items, setItems] = useState([]);

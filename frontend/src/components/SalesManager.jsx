@@ -377,7 +377,7 @@ const SalesManager = () => {
                   <option value="Efectivo">Efectivo</option>
                   <option value="Divisas">Divisas</option>
                   <option value="Punto de Venta">Punto de Venta</option>
-                  <option value="Pago Móvil">Pago Móvil</option>
+                  <option value="Pago Movil">Pago Móvil</option>
                   <option value="Transferencia">Transferencia</option>
                   <option value="Zelle">Zelle</option>
                 </select>
