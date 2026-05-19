@@ -108,10 +108,11 @@ const CartDrawer = ({
                   className="w-full bg-[#1a1a24] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition text-sm sm:text-base font-medium appearance-none"
                 >
                   <option value="Efectivo">Efectivo</option>
-                  <option value="Efectivo Bs">Efectivo Bolívares</option>
-                  <option value="Tarjeta">Tarjeta (Crédito/Débito)</option>
-                  <option value="Transferencia">Transferencia Bancaria</option>
-                  <option value="Pago Movil">Pago Móvil</option>
+                  <option value="Divisas">Divisas</option>
+                  <option value="Punto de Venta">Punto de Venta</option>
+                  <option value="Pago Móvil">Pago Móvil</option>
+                  <option value="Transferencia">Transferencia</option>
+                  <option value="Zelle">Zelle</option>
                 </select>
               </div>
 

@@ -17,6 +17,7 @@ export function useSalesFilters() {
   const [dateFrom,   setDateFrom]             = useState("");
   const [dateTo,     setDateTo]               = useState("");
   const [sellerFilter, setSellerFilter]       = useState(null);
+  const [paymentFilter, setPaymentFilter]     = useState("all");
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [currentPage, setCurrentPage]         = useState(1);
   const datePickerRef = useRef(null);
@@ -24,8 +25,8 @@ export function useSalesFilters() {
   // Re-fetch cuando cambian los filtros o la página
   useEffect(() => {
     if (dateFilter === "custom" && (!dateFrom || !dateTo)) return;
-    fetchSales(currentPage, 20, sellerFilter, dateFilter, dateFrom || undefined, dateTo || undefined);
-  }, [fetchSales, currentPage, sellerFilter, dateFilter, dateFrom, dateTo]);
+    fetchSales(currentPage, 20, sellerFilter, dateFilter, dateFrom || undefined, dateTo || undefined, paymentFilter);
+  }, [fetchSales, currentPage, sellerFilter, dateFilter, dateFrom, dateTo, paymentFilter]);
 
   // Cierra el datepicker al hacer clic fuera
   useEffect(() => {
@@ -48,11 +49,8 @@ export function useSalesFilters() {
   }, [dateFilter, dateFrom, dateTo]);
 
   const filteredTotal = useMemo(() => {
-    const pageTotal = sales.reduce((a, s) => a + Number(s.total_amount || 0), 0);
-    return pagination?.totalAmount !== undefined 
-      ? Number(pagination.totalAmount) 
-      : Number(pageTotal);
-  }, [sales, pagination]);
+    return Number(pagination?.totalAmount || 0);
+  }, [pagination]);
 
   const totalPages = pagination?.totalPages || 1;
   const totalDocs  = pagination?.total ?? sales.length;
@@ -62,6 +60,7 @@ export function useSalesFilters() {
     dateFrom,   setDateFrom,
     dateTo,     setDateTo,
     sellerFilter, setSellerFilter,
+    paymentFilter, setPaymentFilter,
     isDatePickerOpen, setIsDatePickerOpen,
     currentPage, setCurrentPage,
     datePickerRef,

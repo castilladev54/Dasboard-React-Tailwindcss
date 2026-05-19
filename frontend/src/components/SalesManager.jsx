@@ -126,6 +126,7 @@ const SalesManager = () => {
     dateFrom, setDateFrom,
     dateTo, setDateTo,
     sellerFilter, setSellerFilter,
+    paymentFilter, setPaymentFilter,
     isDatePickerOpen, setIsDatePickerOpen,
     currentPage, setCurrentPage,
     datePickerRef, activeDateLabel, filteredTotal, totalPages, totalDocs,
@@ -362,6 +363,26 @@ const SalesManager = () => {
                 </AnimatePresence>
               </div>
 
+              {/* Filtro por Método de Pago */}
+              <div className="flex items-center gap-2">
+                <label htmlFor="payment-filter" className="sr-only">Filtrar por método de pago</label>
+                <select
+                  id="payment-filter"
+                  aria-label="Filtrar por método de pago"
+                  value={paymentFilter}
+                  onChange={(e) => { setPaymentFilter(e.target.value); setCurrentPage(1); }}
+                  className="bg-[#1a1a24] border border-white/10 rounded-xl px-3 py-1.5 text-sm text-gray-300 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition outline-none cursor-pointer"
+                >
+                  <option value="all">Todos los pagos</option>
+                  <option value="Efectivo">Efectivo</option>
+                  <option value="Divisas">Divisas</option>
+                  <option value="Punto de Venta">Punto de Venta</option>
+                  <option value="Pago Móvil">Pago Móvil</option>
+                  <option value="Transferencia">Transferencia</option>
+                  <option value="Zelle">Zelle</option>
+                </select>
+              </div>
+
               {/* Filtro por vendedor */}
               {user?.role !== "employee" && (
                 <div className="flex items-center gap-2">
@@ -391,10 +412,11 @@ const SalesManager = () => {
 
           </div>
 
-          {/* ── Resumen vendedor seleccionado ── */}
-          {sellerFilter && (() => {
-            const seller = staff.find((e) => e._id === sellerFilter);
-            const initial = seller?.name?.charAt(0).toUpperCase() || "?";
+          {/* ── Resumen de Ventas ── */}
+          {(() => {
+            const seller = sellerFilter ? staff.find((e) => e._id === sellerFilter) : null;
+            const initial = seller ? seller?.name?.charAt(0).toUpperCase() : "Σ";
+            const sellerName = seller ? seller.name : "Todas las ventas";
             return (
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 mb-4
                 bg-gradient-to-r from-orange-500/10 via-amber-500/5 to-transparent
@@ -404,8 +426,10 @@ const SalesManager = () => {
                   {initial}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs text-gray-400 uppercase tracking-widest mb-0.5">Vendedor</p>
-                  <p className="text-white font-bold text-base truncate">{seller?.name || "Vendedor"}</p>
+                  <p className="text-xs text-gray-400 uppercase tracking-widest mb-0.5">
+                    {seller ? "Vendedor" : "Resumen Global"}
+                  </p>
+                  <p className="text-white font-bold text-base truncate">{sellerName}</p>
                   <p className="text-xs text-orange-400/70 mt-0.5">{activeDateLabel}</p>
                 </div>
                 <div className="flex gap-6 sm:gap-8">
@@ -419,13 +443,15 @@ const SalesManager = () => {
                     <p className="text-xs text-blue-400">{fmtBs(filteredTotal, toBs)}</p>
                   </div>
                 </div>
-                <button
-                  onClick={() => { setSellerFilter(null); setCurrentPage(1); }}
-                  aria-label="Quitar filtro de vendedor"
-                  className="text-gray-500 hover:text-white transition p-1 shrink-0"
-                >
-                  <X size={18} />
-                </button>
+                {sellerFilter && (
+                  <button
+                    onClick={() => { setSellerFilter(null); setCurrentPage(1); }}
+                    aria-label="Quitar filtro de vendedor"
+                    className="text-gray-500 hover:text-white transition p-1 shrink-0"
+                  >
+                    <X size={18} />
+                  </button>
+                )}
               </div>
             );
           })()}
