@@ -20,6 +20,7 @@ import ExchangeRateBar from "./pos/ExchangeRateBar";
 import HelpModal from "./pos/HelpModal";
 import SaleDetailView from "./pos/SaleDetailView";
 import SalePOSForm from "./pos/SalePOSForm";
+import EditSaleModal from "./pos/EditSaleModal";
 
 import { usePOSCart } from "../hooks/usePOSCart";
 import { useSalesFilters, DATE_FILTER_OPTIONS } from "../hooks/useSalesFilters";
@@ -96,7 +97,7 @@ const buildHistoryColumns = (onViewDetail, toBs) => [
    COMPONENTE PRINCIPAL — orquestador
 ════════════════════════════════════════════════════════════ */
 const SalesManager = () => {
-  const { sales, isLoading, error, createSale, fetchSaleById } = useSaleStore();
+  const { sales, isLoading, error, createSale, fetchSaleById, cancelSale, updateSale } = useSaleStore();
   const { posProducts, isPosLoading, fetchAllForPOS, fetchProductByBarcode } = useProductStore();
   const { staff, fetchStaff } = useStaffStore();
   const { user } = useAuthStore();
@@ -109,6 +110,7 @@ const SalesManager = () => {
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const searchInputRef = useRef(null);
   const submitBtnRef = useRef(null);
@@ -201,6 +203,28 @@ const SalesManager = () => {
     catch { toast.error("No se pudo cargar el detalle de la venta"); }
   };
 
+  const handleCancelSale = async (id) => {
+    if (!window.confirm("¿Estás seguro de que deseas anular esta venta? El stock será devuelto y el monto quedará en 0.")) return;
+    try {
+      await cancelSale(id);
+      toast.success("Venta anulada con éxito");
+      setViewedSale(null);
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Error al anular la venta");
+    }
+  };
+
+  const handleUpdateSale = async (updateData) => {
+    try {
+      const updated = await updateSale(viewedSale._id, updateData);
+      setViewedSale((prev) => ({ ...prev, ...updated }));
+      setIsEditModalOpen(false);
+      toast.success("Venta actualizada con éxito");
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Error al actualizar la venta");
+    }
+  };
+
   /* ── Keyboard ── */
   usePOSKeyboard({
     isFormOpen, viewedSale, showHelp, isScannerOpen, isCartOpen, items,
@@ -272,7 +296,14 @@ const SalesManager = () => {
 
       {/* Detalle de venta */}
       {viewedSale && !isFormOpen && (
-        <SaleDetailView sale={viewedSale} onBack={() => setViewedSale(null)} toBs={toBs} />
+        <SaleDetailView 
+          sale={viewedSale} 
+          onBack={() => setViewedSale(null)} 
+          toBs={toBs} 
+          userRole={user?.role}
+          onCancel={() => handleCancelSale(viewedSale._id)}
+          onEdit={() => setIsEditModalOpen(true)}
+        />
       )}
 
       {/* Error */}
@@ -383,7 +414,7 @@ const SalesManager = () => {
                     <option value="Efectivo">Efectivo</option>
                     <option value="Divisas">Divisas</option>
                     <option value="Punto de Venta">Punto de Venta</option>
-                    <option value="Pago Móvil">Pago Móvil</option>
+                    <option value="Pago Movil">Pago Móvil</option>
                     <option value="Transferencia">Transferencia</option>
                     <option value="Zelle">Zelle</option>
                   </select>
@@ -488,6 +519,15 @@ const SalesManager = () => {
 
       {/* Help modal F1 */}
       <HelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
+
+      {/* Modal de edición de venta */}
+      <EditSaleModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        sale={viewedSale}
+        onSave={handleUpdateSale}
+        isLoading={isLoading}
+      />
 
       {/* Botón flotante de ayuda */}
       {!isFormOpen && !viewedSale && (

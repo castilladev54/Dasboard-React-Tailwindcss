@@ -9,17 +9,39 @@ import Button from "../atoms/Button";
  *
  * @param {{ sale: object, onBack: () => void, toBs: (v: number) => number }} props
  */
-const SaleDetailView = ({ sale, onBack, toBs }) => (
+const SaleDetailView = ({ sale, onBack, toBs, userRole, onCancel, onEdit }) => (
   <motion.article
     initial={{ opacity: 0, scale: 0.95 }}
     animate={{ opacity: 1, scale: 1 }}
     className="mb-8 p-6 bg-[#1a1a24] border border-white/10 rounded-2xl shadow-xl"
   >
-    <header className="flex items-center justify-between mb-6">
-      <Button variant="ghost" onClick={onBack} className="text-orange-500 hover:text-orange-400">
+    <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+      <Button variant="ghost" onClick={onBack} className="text-orange-500 hover:text-orange-400 shrink-0">
         <ArrowLeft size={20} /> <span>Volver a Ventas</span>
       </Button>
-      <p className="text-sm text-gray-400">ID Venta: {sale._id}</p>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
+        <p className="text-sm text-gray-400">ID: {sale._id}</p>
+        {userRole === "customer" && sale.status !== "Anulada" && (
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={onEdit}
+              className="text-blue-400 border-blue-500/30 hover:bg-blue-500/10"
+            >
+              Editar Venta
+            </Button>
+            <Button 
+              variant="danger" 
+              size="sm" 
+              onClick={onCancel}
+              className="bg-red-500/10 text-red-500 hover:bg-red-500/20 border border-red-500/30"
+            >
+              Anular Venta
+            </Button>
+          </div>
+        )}
+      </div>
     </header>
 
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

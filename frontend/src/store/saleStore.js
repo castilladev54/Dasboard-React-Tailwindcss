@@ -57,6 +57,36 @@ export const useSaleStore = create((set) => ({
     }
   },
 
+  cancelSale: async (id) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await axios.put(`${API_URL}/${id}/cancel`);
+      set((state) => ({
+        sales: state.sales.map((s) => s._id === id ? { ...s, status: "Anulada", total_amount: 0 } : s),
+        isLoading: false
+      }));
+      return response.data;
+    } catch (error) {
+      set({ error: error.response?.data?.message || "Error al anular la venta", isLoading: false });
+      throw error;
+    }
+  },
+
+  updateSale: async (id, updateData) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await axios.patch(`${API_URL}/${id}`, updateData);
+      set((state) => ({
+        sales: state.sales.map((s) => s._id === id ? { ...s, ...response.data.sale } : s),
+        isLoading: false
+      }));
+      return response.data.sale || response.data;
+    } catch (error) {
+      set({ error: error.response?.data?.message || "Error al actualizar la venta", isLoading: false });
+      throw error;
+    }
+  },
+
   fetchSaleById: async (id) => {
     set({ isLoading: true, error: null });
     try {
