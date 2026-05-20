@@ -288,100 +288,107 @@ const SalesManager = () => {
             <div className="flex items-center gap-3 flex-wrap">
 
               {/* Selector de fecha */}
-              <div className="relative" ref={datePickerRef}>
-                <button
-                  type="button"
-                  onClick={() => setIsDatePickerOpen((p) => !p)}
-                  aria-expanded={isDatePickerOpen}
-                  aria-haspopup="true"
-                  aria-label={`Filtrar por fecha: ${activeDateLabel}`}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-all
-                    ${dateFilter !== "all" || dateFrom
-                      ? "bg-orange-500/15 border-orange-500/40 text-orange-400"
-                      : "bg-[#1a1a24] border-white/10 text-gray-300 hover:border-orange-500/40 hover:text-orange-400"}`}
-                >
-                  <Calendar size={16} aria-hidden="true" />
-                  <span className="max-w-[160px] truncate">{activeDateLabel}</span>
-                  <ChevronDown size={14} className={`transition-transform duration-200 ${isDatePickerOpen ? "rotate-180" : ""}`} />
-                </button>
+              {user?.role === "employee" ? (
+                <div>
+                </div>
+              ) : (
+                <div className="relative" ref={datePickerRef}>
+                  <button
+                    type="button"
+                    onClick={() => setIsDatePickerOpen((p) => !p)}
+                    aria-expanded={isDatePickerOpen}
+                    aria-haspopup="true"
+                    aria-label={`Filtrar por fecha: ${activeDateLabel}`}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-all
+                      ${dateFilter !== "all" || dateFrom
+                        ? "bg-orange-500/15 border-orange-500/40 text-orange-400"
+                        : "bg-[#1a1a24] border-white/10 text-gray-300 hover:border-orange-500/40 hover:text-orange-400"}`}
+                  >
+                    <Calendar size={16} aria-hidden="true" />
+                    <span className="max-w-[160px] truncate">{activeDateLabel}</span>
+                    <ChevronDown size={14} className={`transition-transform duration-200 ${isDatePickerOpen ? "rotate-180" : ""}`} />
+                  </button>
 
-                <AnimatePresence>
-                  {isDatePickerOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -6, scale: 0.97 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: -6, scale: 0.97 }}
-                      transition={{ duration: 0.15 }}
-                      className="absolute top-full mt-2 left-0 z-50 bg-[#1a1a24] border border-white/10 rounded-2xl shadow-2xl shadow-black/60 p-4 min-w-[260px]"
-                    >
-                      <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Período rápido</p>
-                      <div className="grid grid-cols-2 gap-1.5 mb-4">
-                        {DATE_FILTER_OPTIONS.map((opt) => (
-                          <button
-                            key={opt.value} type="button"
-                            onClick={() => { setDateFilter(opt.value); setDateFrom(""); setDateTo(""); setCurrentPage(1); setIsDatePickerOpen(false); }}
-                            className={`px-3 py-1.5 rounded-xl text-sm font-medium transition-all
-                              ${dateFilter === opt.value && !dateFrom
-                                ? "bg-orange-500 text-black shadow-[0_0_10px_rgba(249,115,22,0.3)]"
-                                : "bg-white/5 text-gray-300 hover:bg-orange-500/20 hover:text-orange-400 border border-white/5"}`}
-                          >
-                            {opt.label}
-                          </button>
-                        ))}
-                      </div>
+                  <AnimatePresence>
+                    {isDatePickerOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -6, scale: 0.97 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -6, scale: 0.97 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute top-full mt-2 left-0 z-50 bg-[#1a1a24] border border-white/10 rounded-2xl shadow-2xl shadow-black/60 p-4 min-w-[260px]"
+                      >
+                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Período rápido</p>
+                        <div className="grid grid-cols-2 gap-1.5 mb-4">
+                          {DATE_FILTER_OPTIONS.map((opt) => (
+                            <button
+                              key={opt.value} type="button"
+                              onClick={() => { setDateFilter(opt.value); setDateFrom(""); setDateTo(""); setCurrentPage(1); setIsDatePickerOpen(false); }}
+                              className={`px-3 py-1.5 rounded-xl text-sm font-medium transition-all
+                                ${dateFilter === opt.value && !dateFrom
+                                  ? "bg-orange-500 text-black shadow-[0_0_10px_rgba(249,115,22,0.3)]"
+                                  : "bg-white/5 text-gray-300 hover:bg-orange-500/20 hover:text-orange-400 border border-white/5"}`}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
 
-                      <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Rango personalizado</p>
-                      <div className="flex flex-col gap-2">
-                        <div>
-                          <label htmlFor="date-from" className="text-xs text-gray-400 mb-1 block">Desde</label>
-                          <input id="date-from" type="date" value={dateFrom}
-                            onChange={(e) => setDateFrom(e.target.value)}
-                            className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:border-orange-500 focus:outline-none transition" />
+                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Rango personalizado</p>
+                        <div className="flex flex-col gap-2">
+                          <div>
+                            <label htmlFor="date-from" className="text-xs text-gray-400 mb-1 block">Desde</label>
+                            <input id="date-from" type="date" value={dateFrom}
+                              onChange={(e) => setDateFrom(e.target.value)}
+                              className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:border-orange-500 focus:outline-none transition" />
+                          </div>
+                          <div>
+                            <label htmlFor="date-to" className="text-xs text-gray-400 mb-1 block">Hasta</label>
+                            <input id="date-to" type="date" value={dateTo} min={dateFrom}
+                              onChange={(e) => setDateTo(e.target.value)}
+                              className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:border-orange-500 focus:outline-none transition" />
+                          </div>
+                          <Button variant="primary" size="sm" type="button"
+                            disabled={!dateFrom || !dateTo}
+                            onClick={() => { setDateFilter("custom"); setCurrentPage(1); setIsDatePickerOpen(false); }}
+                            className="mt-1">
+                            <Check size={14} className="mr-1" /> Aplicar rango
+                          </Button>
+                          {(dateFilter !== "all" || dateFrom) && (
+                            <button type="button"
+                              onClick={() => { setDateFilter("all"); setDateFrom(""); setDateTo(""); setCurrentPage(1); setIsDatePickerOpen(false); }}
+                              className="text-xs text-gray-500 hover:text-gray-300 text-center py-1 transition">
+                              Limpiar filtro
+                            </button>
+                          )}
                         </div>
-                        <div>
-                          <label htmlFor="date-to" className="text-xs text-gray-400 mb-1 block">Hasta</label>
-                          <input id="date-to" type="date" value={dateTo} min={dateFrom}
-                            onChange={(e) => setDateTo(e.target.value)}
-                            className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:border-orange-500 focus:outline-none transition" />
-                        </div>
-                        <Button variant="primary" size="sm" type="button"
-                          disabled={!dateFrom || !dateTo}
-                          onClick={() => { setDateFilter("custom"); setCurrentPage(1); setIsDatePickerOpen(false); }}
-                          className="mt-1">
-                          <Check size={14} className="mr-1" /> Aplicar rango
-                        </Button>
-                        {(dateFilter !== "all" || dateFrom) && (
-                          <button type="button"
-                            onClick={() => { setDateFilter("all"); setDateFrom(""); setDateTo(""); setCurrentPage(1); setIsDatePickerOpen(false); }}
-                            className="text-xs text-gray-500 hover:text-gray-300 text-center py-1 transition">
-                            Limpiar filtro
-                          </button>
-                        )}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
 
               {/* Filtro por Método de Pago */}
-              <div className="flex items-center gap-2">
-                <label htmlFor="payment-filter" className="sr-only">Filtrar por método de pago</label>
-                <select
-                  id="payment-filter"
-                  aria-label="Filtrar por método de pago"
-                  value={paymentFilter}
-                  onChange={(e) => { setPaymentFilter(e.target.value); setCurrentPage(1); }}
-                  className="bg-[#1a1a24] border border-white/10 rounded-xl px-3 py-1.5 text-sm text-gray-300 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition outline-none cursor-pointer"
-                >
-                  <option value="all">Todos los pagos</option>
-                  <option value="Efectivo">Efectivo</option>
-                  <option value="Divisas">Divisas</option>
-                  <option value="Tarjeta">Tarjeta</option>
-                  <option value="Pago Movil">Pago Móvil</option>
-                  <option value="Transferencia">Transferencia</option>
-                  <option value="Zelle">Zelle</option>
-                </select>
-              </div>
+              {user?.role !== "employee" && (
+                <div className="flex items-center gap-2">
+                  <label htmlFor="payment-filter" className="sr-only">Filtrar por método de pago</label>
+                  <select
+                    id="payment-filter"
+                    aria-label="Filtrar por método de pago"
+                    value={paymentFilter}
+                    onChange={(e) => { setPaymentFilter(e.target.value); setCurrentPage(1); }}
+                    className="bg-[#1a1a24] border border-white/10 rounded-xl px-3 py-1.5 text-sm text-gray-300 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition outline-none cursor-pointer"
+                  >
+                    <option value="all">Todos los pagos</option>
+                    <option value="Efectivo">Efectivo</option>
+                    <option value="Divisas">Divisas</option>
+                    <option value="Punto de Venta">Punto de Venta</option>
+                    <option value="Pago Móvil">Pago Móvil</option>
+                    <option value="Transferencia">Transferencia</option>
+                    <option value="Zelle">Zelle</option>
+                  </select>
+                </div>
+              )}
 
               {/* Filtro por vendedor */}
               {user?.role !== "employee" && (

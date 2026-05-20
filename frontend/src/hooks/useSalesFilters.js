@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useSaleStore } from "../store/saleStore";
+import { useAuthStore } from "../store/authStore";
 
 export const DATE_FILTER_OPTIONS = [
   { value: "all",    label: "Todas"    },
@@ -13,6 +14,8 @@ export const DATE_FILTER_OPTIONS = [
 export function useSalesFilters() {
   const { sales, pagination, fetchSales } = useSaleStore();
 
+  const { user } = useAuthStore();
+
   const [dateFilter, setDateFilter]           = useState("all");
   const [dateFrom,   setDateFrom]             = useState("");
   const [dateTo,     setDateTo]               = useState("");
@@ -24,9 +27,15 @@ export function useSalesFilters() {
 
   // Re-fetch cuando cambian los filtros o la página
   useEffect(() => {
-    if (dateFilter === "custom" && (!dateFrom || !dateTo)) return;
-    fetchSales(currentPage, 20, sellerFilter, dateFilter, dateFrom || undefined, dateTo || undefined, paymentFilter);
-  }, [fetchSales, currentPage, sellerFilter, dateFilter, dateFrom, dateTo, paymentFilter]);
+    if (user?.role !== "employee" && dateFilter === "custom" && (!dateFrom || !dateTo)) return;
+
+    const finalDateFilter = user?.role === "employee" ? undefined : dateFilter;
+    const finalDateFrom = user?.role === "employee" ? undefined : (dateFrom || undefined);
+    const finalDateTo = user?.role === "employee" ? undefined : (dateTo || undefined);
+    const finalPaymentFilter = user?.role === "employee" ? undefined : paymentFilter;
+
+    fetchSales(currentPage, 20, sellerFilter, finalDateFilter, finalDateFrom, finalDateTo, finalPaymentFilter);
+  }, [fetchSales, currentPage, sellerFilter, dateFilter, dateFrom, dateTo, paymentFilter, user?.role]);
 
   // Cierra el datepicker al hacer clic fuera
   useEffect(() => {
