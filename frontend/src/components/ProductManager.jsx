@@ -13,6 +13,7 @@ import SectionHeader from "./molecules/SectionHeader";
 import ConfirmDialog from "./molecules/ConfirmDialog";
 import DataTable    from "./organisms/DataTable";
 import BarcodeScanner from "./BarcodeScanner";
+import ProductSearchBar from "./molecules/ProductSearchBar";
 
 const ITEMS_PER_PAGE = 20;
 
@@ -115,13 +116,26 @@ const ProductManager = () => {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [currentPage, setCurrentPage]   = useState(1);
+  const [searchTerm, setSearchTerm]     = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
   const totalPages      = pagination?.totalPages || 1;
   const currentProducts = products;
 
+  // Debounce search term
   useEffect(() => {
-    fetchProducts(currentPage, ITEMS_PER_PAGE);
-  }, [fetchProducts, currentPage]);
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      if (searchTerm !== debouncedSearch) {
+        setCurrentPage(1); // Reset page only if search actually changed
+      }
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [searchTerm, debouncedSearch]);
+
+  useEffect(() => {
+    fetchProducts(currentPage, ITEMS_PER_PAGE, debouncedSearch);
+  }, [fetchProducts, currentPage, debouncedSearch]);
 
   useEffect(() => {
     fetchCategories();
@@ -236,6 +250,17 @@ const ProductManager = () => {
         </p>
       )}
 
+      {/* ── Buscador ── */}
+      {!isFormOpen && (
+        <div className="mb-6">
+          <ProductSearchBar
+            searchTerm={searchTerm}
+            onSearch={setSearchTerm}
+            placeholder="Buscar por nombre o código de barras..."
+            onOpenScanner={() => setIsScannerOpen(true)}
+          />
+        </div>
+      )}
 
       {/* ── Formulario ── */}
       <Modal
@@ -447,9 +472,13 @@ const ProductManager = () => {
         isOpen={isScannerOpen}
         onClose={() => setIsScannerOpen(false)}
         onScan={(code) => {
-          setFormData((prev) => ({ ...prev, barcode: code }));
           setIsScannerOpen(false);
           toast.success(`Código detectado: ${code}`);
+          if (isFormOpen) {
+            setFormData((prev) => ({ ...prev, barcode: code }));
+          } else {
+            setSearchTerm(code);
+          }
         }}
       />
     </section>

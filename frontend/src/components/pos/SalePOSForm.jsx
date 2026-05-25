@@ -6,6 +6,7 @@ import InputText from "../atoms/InputText";
 import KBD from "../atoms/KBD";
 import ProductCard from "./ProductCard";
 import CartDrawer from "./CartDrawer";
+import ProductSearchBar from "../molecules/ProductSearchBar";
 
 /**
  * SalePOSForm — Pantalla completa del Punto de Venta.
@@ -69,42 +70,28 @@ const SalePOSForm = ({
 
       {/* Buscador + catálogo */}
       <div className="flex-1 flex flex-col overflow-hidden bg-gradient-to-b from-[#1a1a24]/50 to-[#0f0f13] p-3 sm:p-6">
-        <div className="flex gap-2 sm:gap-3 mb-4 sm:mb-6 max-w-4xl mx-auto w-full">
-          <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} aria-hidden="true" />
-            <InputText
-              ref={searchInputRef}
-              type="text"
-              placeholder="Buscar producto... (F3)"
-              value={searchTerm}
-              onChange={(e) => onSearch(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key !== "Enter") return;
-                e.preventDefault();
-                if (filteredProducts.length > 0 && !searchTerm.includes("*")) {
-                  onAddItem(filteredProducts[0]);
-                  onSearch("");
-                } else if (searchTerm.length >= 2) {
-                  let code = searchTerm, qty = 1;
-                  if (searchTerm.includes("*")) {
-                    const [q, c] = searchTerm.split("*");
-                    qty = parseFloat(q) || 1;
-                    code = c || "";
-                  }
-                  if (code) onSearch(code);
+        <div className="mb-4 sm:mb-6">
+          <ProductSearchBar
+            searchTerm={searchTerm}
+            onSearch={onSearch}
+            searchInputRef={searchInputRef}
+            onOpenScanner={onOpenScanner}
+            placeholder="Buscar producto... (F3)"
+            onEnter={(term) => {
+              if (filteredProducts.length > 0 && !term.includes("*")) {
+                onAddItem(filteredProducts[0]);
+                onSearch("");
+              } else if (term.length >= 2) {
+                let code = term, qty = 1;
+                if (term.includes("*")) {
+                  const [q, c] = term.split("*");
+                  qty = parseFloat(q) || 1;
+                  code = c || "";
                 }
-              }}
-              className="pl-12 h-12 sm:h-14 text-base sm:text-lg bg-black/40 border-white/10 rounded-xl"
-            />
-          </div>
-          <Button
-            variant="outline"
-            onClick={onOpenScanner}
-            aria-label="Abrir escáner de cámara (F6)"
-            className="h-12 w-12 sm:h-14 sm:w-14 !p-0 shrink-0 flex items-center justify-center bg-[#1a1a24] border-white/10 hover:bg-orange-500/20 hover:border-orange-500/40 rounded-xl transition shadow-lg group"
-          >
-            <Camera className="w-7 h-7 sm:w-8 sm:h-8 text-orange-500 group-hover:scale-110 transition-transform" strokeWidth={2.5} />
-          </Button>
+                if (code) onSearch(code);
+              }
+            }}
+          />
         </div>
 
         {/* Grid de productos */}
