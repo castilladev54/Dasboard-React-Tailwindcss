@@ -9,7 +9,11 @@ import Button from "../atoms/Button";
  *
  * @param {{ sale: object, onBack: () => void, toBs: (v: number) => number }} props
  */
-const SaleDetailView = ({ sale, onBack, toBs, userRole, onCancel, onEdit }) => (
+const SaleDetailView = ({ sale, onBack, toBs, userRole, onCancel, onEdit }) => {
+  // Use historical exchange rate if available, otherwise fallback to current global rate
+  const histToBs = sale.exchange_rate ? (val) => Number((val * sale.exchange_rate).toFixed(2)) : toBs;
+
+  return (
   <motion.article
     initial={{ opacity: 0, scale: 0.95 }}
     animate={{ opacity: 1, scale: 1 }}
@@ -50,7 +54,7 @@ const SaleDetailView = ({ sale, onBack, toBs, userRole, onCancel, onEdit }) => (
         { label: "Fecha", value: new Date(sale.createdAt).toLocaleString(), cls: "" },
         { label: "Atendido por", value: sale.sold_by?.name || "Propietario", cls: "" },
         { label: "Total USD", value: fmtUSD(sale.total_amount), cls: "text-amber-500 text-2xl font-bold bg-amber-500/10 border-amber-500/20" },
-        { label: "Total Bs", value: fmtBs(sale.total_amount, toBs), cls: "text-blue-400 text-2xl font-bold bg-blue-500/10 border-blue-500/20" },
+        { label: "Total Bs", value: fmtBs(sale.total_amount, histToBs), cls: "text-blue-400 text-2xl font-bold bg-blue-500/10 border-blue-500/20" },
       ].map(({ label, value, cls }) => (
         <div key={label} className={`p-4 rounded-xl border border-white/5 bg-black/20 ${cls}`}>
           <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">{label}</p>
@@ -79,10 +83,10 @@ const SaleDetailView = ({ sale, onBack, toBs, userRole, onCancel, onEdit }) => (
                 <td className="px-6 py-3 text-orange-400 font-medium">{item.product_id?.name || "Desconocido"}</td>
                 <td className="px-6 py-3 text-gray-300">{item.quantity} {unitLabel}</td>
                 <td className="px-6 py-3 text-gray-300">{fmtUSD(item.unit_price)}</td>
-                <td className="px-6 py-3 text-blue-400">{fmtBs(item.unit_price, toBs)}</td>
+                <td className="px-6 py-3 text-blue-400">{fmtBs(item.unit_price, histToBs)}</td>
                 <td className="px-6 py-3">
                   <div className="text-amber-500 font-medium">{fmtUSD(sub)}</div>
-                  <div className="text-xs text-blue-400">{fmtBs(sub, toBs)}</div>
+                  <div className="text-xs text-blue-400">{fmtBs(sub, histToBs)}</div>
                 </td>
               </tr>
             );
@@ -91,6 +95,7 @@ const SaleDetailView = ({ sale, onBack, toBs, userRole, onCancel, onEdit }) => (
       </table>
     </div>
   </motion.article>
-);
+  );
+};
 
 export default SaleDetailView;

@@ -73,12 +73,15 @@ const buildHistoryColumns = (onViewDetail, toBs) => [
   {
     key: "total_amount",
     label: "Total",
-    render: (val) => (
-      <div>
-        <div className="text-amber-500 font-medium text-sm sm:text-base">{fmtUSD(val)}</div>
-        <div className="text-[10px] sm:text-xs text-blue-400 mt-0.5">{fmtBs(val, toBs)}</div>
-      </div>
-    ),
+    render: (val, row) => {
+      const histBs = row.exchange_rate ? Number((val * row.exchange_rate).toFixed(2)) : toBs(val);
+      return (
+        <div>
+          <div className="text-amber-500 font-medium text-sm sm:text-base">{fmtUSD(val)}</div>
+          <div className="text-[10px] sm:text-xs text-blue-400 mt-0.5">Bs {histBs.toFixed(2)}</div>
+        </div>
+      );
+    },
   },
   {
     key: "_id",
@@ -190,6 +193,7 @@ const SalesManager = () => {
     try {
       await createSale({
         customer_id: user?._id || user?.id, payment_method: paymentMethod, total_amount,
+        exchange_rate: exchangeRate,
         items: items.map((i) => ({ product_id: i.product_id, quantity: parseFloat(i.quantity) || 0, unit_price: i.unit_price })),
       });
       toast.success("Venta registrada con éxito");
@@ -262,7 +266,7 @@ const SalesManager = () => {
             </Button>
           )}
         </div>
-        <ExchangeRateBar exchangeRate={exchangeRate} onRateChange={setExchangeRate} />
+            <ExchangeRateBar />
       </header>
 
       {/* POS fullscreen */}

@@ -21,6 +21,7 @@ import {
 import { usePurchaseStore } from "../store/purchaseStore";
 import { useProductStore }  from "../store/productStore";
 import { useAuthStore }     from "../store/authStore";
+import { useCurrencyStore } from "../store/currencyStore";
 import toast from "react-hot-toast";
 
 import Button        from "./atoms/Button";
@@ -365,6 +366,7 @@ const PurchaseManager = () => {
   const { purchases, pagination, isLoading, error, fetchPurchases, createPurchase, fetchPurchaseById, payPurchase } = usePurchaseStore();
   const { products, fetchProducts, fetchProductByBarcode } = useProductStore();
   const { user } = useAuthStore();
+  const { exchangeRate } = useCurrencyStore();
 
   const [isFormOpen,    setIsFormOpen]    = useState(false);
   const [viewedPurchase, setViewedPurchase] = useState(null);
@@ -483,6 +485,7 @@ const PurchaseManager = () => {
         admin_id: user?._id || user?.id,
         supplier,
         dueDate: dueDate ? new Date(dueDate).toISOString() : null,
+        exchange_rate: exchangeRate,
         items: items.map(({ product_id, quantity, unit_cost }) => ({
           product_id,
           quantity:  parseFloat(quantity) || 0,
