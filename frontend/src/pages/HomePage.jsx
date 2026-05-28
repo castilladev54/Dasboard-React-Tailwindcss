@@ -7,6 +7,7 @@ import LocationSection from "../components/LocationSection";
 import { heroContent } from "../constants";
 import PricingSection from "../components/PricingSection";
 import dashboardScreenshot from "../assets/dasboardcastilladev.jpg";
+import dashboardHero from "../assets/dashboard_hero.png";
 
 const HomePage = () => {
   const { isAuthenticated } = useAuthStore();
@@ -77,10 +78,11 @@ const HomePage = () => {
               className="relative p-2 md:p-3 bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl md:rounded-[2rem] shadow-[0_0_50px_rgba(249,115,22,0.15)]"
             >
               <motion.img
+                src={dashboardHero}
                 whileHover={{ rotateY: -5, rotateX: 5, scale: 1.02 }}
                 transition={{ duration: 0.4 }}
                 alt="Panel Administrativo Moderno"
-                className="w-full h-auto rounded-xl md:rounded-3xl border border-white/5 object-cover"
+                className="w-full h-auto rounded-xl md:rounded-3xl border border-white/5 object-cover shadow-[0_0_60px_rgba(249,115,22,0.2)]"
               />
 
               {/* Tag Flotante 3D */}
