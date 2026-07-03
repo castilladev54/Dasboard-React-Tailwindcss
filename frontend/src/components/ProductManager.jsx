@@ -1,17 +1,17 @@
 import { useEffect, useState } from "react";
 import { Plus, PackageOpen, Camera, ScanBarcode, Tag as TagIcon } from "lucide-react";
-import { useProductStore }  from "../store/productStore";
+import { useProductStore } from "../store/productStore";
 import { useCategoryStore } from "../store/categoryStore";
 import { useCurrencyStore } from "../store/currencyStore";
 import toast from "react-hot-toast";
 
-import Button       from "./atoms/Button";
-import Badge        from "./atoms/Badge";
-import Modal        from "./molecules/Modal";
-import FormField    from "./molecules/FormField";
+import Button from "./atoms/Button";
+import Badge from "./atoms/Badge";
+import Modal from "./molecules/Modal";
+import FormField from "./molecules/FormField";
 import SectionHeader from "./molecules/SectionHeader";
 import ConfirmDialog from "./molecules/ConfirmDialog";
-import DataTable    from "./organisms/DataTable";
+import DataTable from "./organisms/DataTable";
 import BarcodeScanner from "./BarcodeScanner";
 import ProductSearchBar from "./molecules/ProductSearchBar";
 
@@ -33,16 +33,16 @@ const STOCK_REASONS = [
 ];
 
 const UNIT_OPTIONS = [
-  { value: "unidad", label: "Unidad (ud)"      },
-  { value: "kg",     label: "Kilogramos (kg)"  },
-  { value: "litro",  label: "Litros (l)"       },
-  { value: "metro",  label: "Metros (m)"       },
+  { value: "unidad", label: "Unidad (ud)" },
+  { value: "kg", label: "Kilogramos (kg)" },
+  { value: "litro", label: "Litros (l)" },
+  { value: "metro", label: "Metros (m)" },
 ];
 
 /** Devuelve la variante de Badge según el stock */
 const stockVariant = (stock) => {
   if (stock > 10) return "success";
-  if (stock > 0)  return "warning";
+  if (stock > 0) return "warning";
   return "danger";
 };
 
@@ -88,12 +88,19 @@ const buildColumns = (toBs) => [
   {
     key: "stock",
     label: "Stock",
-    render: (val, row) => (
-      <Badge variant={stockVariant(val)}>
-        {val}{" "}
-        <span className="hidden sm:inline">{formatUnit(val, row.unit_type)}</span>
-      </Badge>
-    ),
+    render: (val, row) => {
+      // Formateador dinámico: Si tiene decimales los muestra (máximo 3), si es entero se queda limpio.
+      const formattedStock = new Intl.NumberFormat("es-VE", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 3,
+      }).format(val);
+      return (
+        <Badge variant={stockVariant(val)}>
+          {formattedStock}{" "}
+          <span className="hidden sm:inline">{formatUnit(val, row.unit_type)}</span>
+        </Badge>
+      );
+    },
   },
   {
     key: "barcode",
@@ -110,16 +117,16 @@ const ProductManager = () => {
   const { categories, fetchCategories } = useCategoryStore();
   const { toBs } = useCurrencyStore();
 
-  const [isFormOpen, setIsFormOpen]     = useState(false);
-  const [editingId, setEditingId]       = useState(null);
-  const [formData, setFormData]         = useState(EMPTY_FORM);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [formData, setFormData] = useState(EMPTY_FORM);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
-  const [currentPage, setCurrentPage]   = useState(1);
-  const [searchTerm, setSearchTerm]     = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
-  const totalPages      = pagination?.totalPages || 1;
+  const totalPages = pagination?.totalPages || 1;
   const currentProducts = products;
 
   // Debounce search term
@@ -150,14 +157,14 @@ const ProductManager = () => {
   const handleEdit = (product) => {
     setEditingId(product._id);
     setFormData({
-      name:        product.name,
+      name: product.name,
       description: product.description || "",
-      price:       product.price,
-      stock:       product.stock,
-      category:    product.category?._id || product.category || "",
-      unit_type:   product.unit_type || "unidad",
-      barcode:     product.barcode || "",
-      new_stock:   product.stock,
+      price: product.price,
+      stock: product.stock,
+      category: product.category?._id || product.category || "",
+      unit_type: product.unit_type || "unidad",
+      barcode: product.barcode || "",
+      new_stock: product.stock,
       stock_reason: "",
     });
     setIsFormOpen(true);
@@ -165,16 +172,16 @@ const ProductManager = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Si estamos editando y el stock fue modificado manualmente
     const isStockChanged = editingId && Number(formData.new_stock) !== Number(formData.stock);
-    
+
     if (isStockChanged && !formData.stock_reason) {
       return toast.error("Debe seleccionar un motivo para el ajuste de stock.");
     }
 
     const payload = { ...formData, price: Number(formData.price) };
-    
+
     // Limpiar variables temporales y estructurar base
     if (editingId) {
       delete payload.stock;        // nunca enviamos el campo "stock" al actualizar
@@ -183,7 +190,7 @@ const ProductManager = () => {
 
       if (isStockChanged) {
         // Solo incluir ajuste de stock si el usuario lo modificó
-        payload.new_stock    = Number(formData.new_stock);
+        payload.new_stock = Number(formData.new_stock);
         payload.stock_reason = formData.stock_reason;
       }
       // Si el stock NO cambió, no enviamos new_stock ni stock_reason
@@ -323,7 +330,7 @@ const ProductManager = () => {
                     Stock actual del sistema: {formData.stock}
                   </span>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <input
                     type="number"
@@ -336,7 +343,7 @@ const ProductManager = () => {
                     placeholder="Cantidad real en tienda"
                     className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition font-bold"
                   />
-                  
+
                   {Number(formData.new_stock) !== Number(formData.stock) && (
                     <select
                       name="stock_reason"

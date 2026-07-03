@@ -1,9 +1,7 @@
 import { create } from "zustand";
-import axios from "axios";
+import API from "../api/axios";
 
-const API_URL = import.meta.env.MODE === "development" ? "http://localhost:5000/api/products" : "https://backend-inventory-system.vercel.app/api/products";
-
-axios.defaults.withCredentials = true;
+const RESOURCE_URL = "/products";
 
 export const useProductStore = create((set) => ({
   products: [],
@@ -20,13 +18,13 @@ export const useProductStore = create((set) => ({
       const params = new URLSearchParams({ page, limit });
       if (search.trim()) params.set("search", search.trim());
 
-      const response = await axios.get(`${API_URL}?${params.toString()}`);
+      const response = await API.get(`${RESOURCE_URL}?${params.toString()}`);
       const payload = response.data;
 
       // El backend devuelve los campos de paginación en el nivel raíz:
       // { success, products, total, totalPages, currentPage }
       const products = payload.products || payload.data || (Array.isArray(payload) ? payload : []);
-      const total      = payload.total      ?? 0;
+      const total = payload.total ?? 0;
       const totalPages = payload.totalPages ?? 1;
       const currentPage = payload.currentPage ?? page;
 
@@ -36,6 +34,9 @@ export const useProductStore = create((set) => ({
         isLoading: false,
       });
     } catch (error) {
+      // AGREGA ESTO PARA VER EL ESTADO REAL DEL ERROR HTTP
+      console.log("Status Code del error:", error.response?.status);
+      console.log("Cuerpo del error del backend:", error.response?.data);
       set({ error: error.response?.data?.message || "Error al obtener los productos", isLoading: false });
     }
   },
@@ -48,7 +49,7 @@ export const useProductStore = create((set) => ({
   fetchAllForPOS: async () => {
     set({ isPosLoading: true, error: null });
     try {
-      const response = await axios.get(`${API_URL}?page=1&limit=5000`);
+      const response = await API.get(`${RESOURCE_URL}?page=1&limit=5000`);
       const payload = response.data;
       const products =
         payload.products ||
@@ -68,10 +69,10 @@ export const useProductStore = create((set) => ({
   createProduct: async (productData) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post(API_URL, productData);
-      set((state) => ({ 
+      const response = await API.post(RESOURCE_URL, productData);
+      set((state) => ({
         products: [...state.products, response.data.product || response.data],
-        isLoading: false 
+        isLoading: false
       }));
       return response.data;
     } catch (error) {
@@ -83,9 +84,9 @@ export const useProductStore = create((set) => ({
   updateProduct: async (id, productData) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.put(`${API_URL}/${id}`, productData);
+      const response = await API.put(`${RESOURCE_URL}/${id}`, productData);
       set((state) => ({
-        products: state.products.map((prod) => 
+        products: state.products.map((prod) =>
           prod._id === id ? response.data.product || response.data : prod
         ),
         isLoading: false
@@ -100,7 +101,7 @@ export const useProductStore = create((set) => ({
   deleteProduct: async (id) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.delete(`${API_URL}/${id}`);
+      const response = await API.delete(`${RESOURCE_URL}/${id}`);
       set((state) => ({
         products: state.products.filter((prod) => prod._id !== id),
         isLoading: false
@@ -115,7 +116,7 @@ export const useProductStore = create((set) => ({
   fetchProductByBarcode: async (barcode) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.get(`${API_URL}/barcode/${barcode}`);
+      const response = await API.get(`${RESOURCE_URL}/barcode/${barcode}`);
       set({ isLoading: false });
       return response.data;
     } catch (error) {
