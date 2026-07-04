@@ -1,10 +1,8 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import axios from "axios";
+import API from "../api/axios";
 
-const API_URL = import.meta.env.MODE === "development" ? "http://localhost:5000/api/rates" : "https://backend-inventory-system.vercel.app/api/rates";
-
-axios.defaults.withCredentials = true;
+const API_URL = "/rates";
 
 export const useCurrencyStore = create(
   persist(
@@ -26,7 +24,7 @@ export const useCurrencyStore = create(
       loadRateFromServer: async () => {
         set({ isLoading: true, error: null });
         try {
-          const response = await axios.get(`${API_URL}/today`);
+          const response = await API.get(`${API_URL}/today`);
           if (response.data && response.data.rate) {
             // response.data.rate podria ser el documento { _id, rate, ... } o el numero. 
             // Asumiendo que el backend retorna { success: true, rate: { rate: 38.5, ... } } o { rate: 38.5 }
@@ -43,15 +41,15 @@ export const useCurrencyStore = create(
       saveRateToServer: async (rate) => {
         const parsed = parseFloat(rate);
         if (isNaN(parsed) || parsed <= 0) return;
-        
+
         set({ isLoading: true, error: null });
         try {
-          const response = await axios.post(API_URL, { rate: parsed });
+          const response = await API.post(API_URL, { rate: parsed });
           if (response.data && response.data.rate) {
-             const rateValue = response.data.rate.rate || response.data.rate;
-             set({ exchangeRate: rateValue, isLoading: false });
+            const rateValue = response.data.rate.rate || response.data.rate;
+            set({ exchangeRate: rateValue, isLoading: false });
           } else {
-             set({ exchangeRate: parsed, isLoading: false });
+            set({ exchangeRate: parsed, isLoading: false });
           }
         } catch (error) {
           set({ error: error.response?.data?.message || "Error al guardar la tasa", isLoading: false });

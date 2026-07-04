@@ -1,9 +1,7 @@
 import { create } from "zustand";
-import axios from "axios";
+import API from "../api/axios";
 
-const API_URL = import.meta.env.MODE === "development" ? "http://localhost:5000/api/staff" : "https://backend-inventory-system.vercel.app/api/staff";
-
-axios.defaults.withCredentials = true;
+const API_URL = "/staff";
 
 export const useStaffStore = create((set, get) => ({
   staff: [],
@@ -17,7 +15,7 @@ export const useStaffStore = create((set, get) => ({
       const params = new URLSearchParams();
       if (dateFilter && dateFilter !== 'all') params.append('dateFilter', dateFilter);
       const url = params.toString() ? `${API_URL}?${params}` : API_URL;
-      const response = await axios.get(url);
+      const response = await API.get(url);
       set({
         staff: response.data.employees || [],
         total: response.data.total || 0,
@@ -35,7 +33,7 @@ export const useStaffStore = create((set, get) => ({
   createEmployee: async (employeeData) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post(API_URL, employeeData);
+      const response = await API.post(API_URL, employeeData);
       set((state) => ({
         staff: [...state.staff, response.data.employee],
         isLoading: false,
@@ -53,7 +51,7 @@ export const useStaffStore = create((set, get) => ({
   updateEmployeePermissions: async (id, permissions) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.put(`${API_URL}/${id}`, { permissions });
+      const response = await API.put(`${API_URL}/${id}`, { permissions });
       set((state) => ({
         staff: state.staff.map((emp) =>
           emp._id === id ? { ...emp, permissions: response.data.employee.permissions } : emp
@@ -73,7 +71,7 @@ export const useStaffStore = create((set, get) => ({
   deleteEmployee: async (id) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.delete(`${API_URL}/${id}`);
+      const response = await API.delete(`${API_URL}/${id}`);
       set((state) => ({
         staff: state.staff.filter((emp) => emp._id !== id),
         isLoading: false,

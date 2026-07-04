@@ -1,9 +1,7 @@
 import { create } from "zustand";
-import axios from "axios";
+import API from "../api/axios";
 
-const API_URL = import.meta.env.MODE === "development" ? "http://localhost:5000/api/purchases" : "https://backend-inventory-system.vercel.app/api/purchases";
-
-axios.defaults.withCredentials = true;
+const API_URL = "/purchases";
 
 export const usePurchaseStore = create((set) => ({
   purchases: [],
@@ -15,13 +13,13 @@ export const usePurchaseStore = create((set) => ({
   fetchPurchases: async (page = 1, limit = 20) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.get(`${API_URL}?page=${page}&limit=${limit}`);
+      const response = await API.get(`${API_URL}?page=${page}&limit=${limit}`);
       const payload = response.data;
 
       // El backend devuelve los campos de paginación en el nivel raíz:
       // { success, purchases, total, totalPages, currentPage }
-      const purchases  = payload.purchases || payload.data || (Array.isArray(payload) ? payload : []);
-      const total      = payload.total      ?? 0;
+      const purchases = payload.purchases || payload.data || (Array.isArray(payload) ? payload : []);
+      const total = payload.total ?? 0;
       const totalPages = payload.totalPages ?? 1;
       const currentPage = payload.currentPage ?? page;
 
@@ -38,7 +36,7 @@ export const usePurchaseStore = create((set) => ({
   fetchPayments: async () => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.get(`${API_URL}/payments`);
+      const response = await API.get(`${API_URL}/payments`);
       set({ payments: response.data.payments || response.data, isLoading: false });
     } catch (error) {
       set({ error: error.response?.data?.message || "Error al obtener el historial de pagos", isLoading: false });
@@ -48,10 +46,10 @@ export const usePurchaseStore = create((set) => ({
   createPurchase: async (purchaseData) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post(API_URL, purchaseData);
-      set((state) => ({ 
+      const response = await API.post(API_URL, purchaseData);
+      set((state) => ({
         purchases: [response.data.purchase || response.data, ...state.purchases],
-        isLoading: false 
+        isLoading: false
       }));
       return response.data;
     } catch (error) {
@@ -63,7 +61,7 @@ export const usePurchaseStore = create((set) => ({
   fetchPurchaseById: async (id) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.get(`${API_URL}/${id}`);
+      const response = await API.get(`${API_URL}/${id}`);
       set({ isLoading: false });
       return response.data.purchase || response.data;
     } catch (error) {
@@ -75,11 +73,11 @@ export const usePurchaseStore = create((set) => ({
   payPurchase: async (id, paymentData) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.put(`${API_URL}/${id}/pay`, paymentData);
-      
+      const response = await API.put(`${API_URL}/${id}/pay`, paymentData);
+
       // Update the local purchase if found
       set((state) => ({
-        purchases: state.purchases.map(p => 
+        purchases: state.purchases.map(p =>
           p._id === id ? { ...p, ...((response.data.purchase || response.data) || {}) } : p
         ),
         isLoading: false
